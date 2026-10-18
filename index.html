@@ -8,6 +8,8 @@
 <!-- Solo la ve quien tiene el enlace: que los buscadores no la indexen -->
 <meta name="robots" content="noindex, nofollow">
 <meta name="theme-color" content="#0c111d">
+<!-- Ya trae su tema: que el «modo oscuro» de algunos navegadores del móvil no le cambie los colores -->
+<meta name="color-scheme" content="dark">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Catálogo">
 <meta property="og:description" content="Impresión 3D personalizada. 256 productos. Elige y haz tu pedido.">
@@ -19,14 +21,14 @@
 <style>
 :root{
   --marca: #2850E0;
-  --marca-texto: color-mix(in srgb, var(--marca) 45%, #fff);
+  --marca-texto: #9eb0f1;  /* calculado en web.py: color-mix() no lo entienden los móviles antiguos */
   --fondo: #0c111d; --panel: #151c2b; --panel-2: #1c2538; --linea: rgba(255, 255, 255, .08);
   --texto: #eef2f8; --tenue: #a3adbf; --suave: #6f7a8f; --ok: #22c55e; --error: #f87171;
   --sombra: 0 10px 30px rgba(0, 0, 0, .45);
   color-scheme: dark;
 }
 [data-tema="claro"]{
-  --marca-texto: color-mix(in srgb, var(--marca) 85%, #000);
+  --marca-texto: #2244be;
   --fondo: #f3f5f9; --panel: #fff; --panel-2: #eef1f6; --linea: rgba(15, 23, 42, .1);
   --texto: #131926; --tenue: #556072; --suave: #8892a5; --ok: #16a34a; --error: #dc2626;
   --sombra: 0 10px 30px rgba(15, 23, 42, .18);
@@ -291,6 +293,13 @@ footer .legal{ margin-top: 18px; font-size: 12px; color: var(--suave); }
     madera: '#b5834f', negro: '#16181d', blanco: '#ffffff', gris: '#9aa0a8', plata: '#c0c5cc', plateado: '#c0c5cc',
     bronce: '#a77044', cobre: '#b8693f', hueso: '#efe8d8', carne: '#f0c9a8', piel: '#f0c9a8', grafito: '#3b3f46',
   };
+  // #rrggbb mezclado con blanco (255) o negro (0), como color-mix() de la app pero en un color normal:
+  // color-mix() no lo entienden los móviles con el sistema algo antiguo y el círculo se quedaba sin color
+  function mezclar(hex, pct, con) {
+    const n = parseInt(hex.slice(1), 16);
+    return `#${[n >> 16, (n >> 8) & 255, n & 255]
+      .map((v) => Math.round(v * pct / 100 + con * (1 - pct / 100)).toString(16).padStart(2, '0')).join('')}`;
+  }
   function punto(nombre) {
     const t = normalizar(nombre.trim());
     const p = el('span', 'punto');
@@ -302,14 +311,14 @@ footer .legal{ margin-top: 18px; font-size: 12px; color: var(--suave); }
     let css;
     if (clave) {
       css = COLORES[clave];
-      if (palabras.includes('claro') || palabras.includes('pastel')) css = `color-mix(in srgb, ${css} 55%, #fff)`;
-      else if (palabras.includes('oscuro')) css = `color-mix(in srgb, ${css} 60%, #000)`;
-      else if (palabras.includes('suave')) css = `color-mix(in srgb, ${css} 80%, #fff)`;
-      else if (palabras.includes('fuerte')) css = `color-mix(in srgb, ${css} 85%, #000)`;
+      if (palabras.includes('claro') || palabras.includes('pastel')) css = mezclar(css, 55, 255);
+      else if (palabras.includes('oscuro')) css = mezclar(css, 60, 0);
+      else if (palabras.includes('suave')) css = mezclar(css, 80, 255);
+      else if (palabras.includes('fuerte')) css = mezclar(css, 85, 0);
     } else {
       let h = 0;
       for (const c of t) h = (h * 31 + c.charCodeAt(0)) % 360;
-      css = `hsl(${h} 45% 62%)`;
+      css = `hsl(${h}, 45%, 62%)`;
     }
     p.style.setProperty('--c', css);
     return p;
