@@ -125,6 +125,9 @@ dialog::backdrop{ background: rgba(4, 7, 14, .62); }
 .punto.multi{ background: conic-gradient(#e53935, #fdd835, #43a047, #1e63d6, #8e44c8, #e53935); }
 .punto.transparente{ background: repeating-conic-gradient(#ccc 0 25%, #fff 0 50%) 0 0 / 8px 8px; }
 .credito{ margin: 16px 0 0; font-size: 12px; color: var(--suave); }
+.compartir{ display: inline-flex; align-items: center; gap: 8px; margin-top: 12px; padding: 8px 14px; border-radius: 999px;
+  border: 1px solid var(--linea); background: var(--panel-2); color: var(--texto); font-size: 14px; font-weight: 650; text-decoration: none; }
+.compartir svg{ width: 18px; height: 18px; color: #25d366; }
 .comprar{ display: flex; gap: 10px; align-items: stretch; }
 .paso{ display: flex; align-items: center; border: 1px solid var(--linea); border-radius: 14px; background: var(--panel-2); }
 .paso button{ width: 44px; height: 50px; border: 0; background: none; font-size: 22px; }
@@ -260,6 +263,7 @@ footer .legal{ margin-top: 18px; font-size: 12px; color: var(--suave); }
   const quitarTildes = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '');
   const normalizar = (t) => quitarTildes(String(t || '').toLowerCase());
   const porId = new Map(D.productos.map((p) => [p.id, p]));
+  const URL_WEB = 'https://jcarmonamarin-glitch.github.io/NegoQR_Catalogo/';  // la publicada, también en la vista previa local: es la que se comparte
 
   function el(tag, clase, ...hijos) {
     const e = document.createElement(tag);
@@ -441,6 +445,26 @@ footer .legal{ margin-top: 18px; font-size: 12px; color: var(--suave); }
     d.addEventListener('click', (ev) => { if (ev.target === d || ev.target.closest('[data-cerrar]')) cerrarDialogo(d); });
   });
 
+  // ---- Compartir un producto ----
+  // El enlace es su página (p/<id>.html, la genera web.py al publicar): la vista previa de WhatsApp enseña su foto,
+  // nombre y precio, y al abrirla lleva aquí con la ficha abierta (#p=<id>). Sin número: WhatsApp pregunta a quién.
+  function compartir(p) {
+    const a = el('a', 'compartir');
+    a.insertAdjacentHTML('afterbegin', ICONOS.wa);
+    a.append('Compartir por WhatsApp');
+    const enlace = `${URL_WEB}p/${p.id}.html`;
+    a.href = `https://wa.me/?text=${encodeURIComponent(`Mira esto: ${p.nombre} (${precio(p.precio)})\n${enlace}`)}`;
+    a.target = '_blank';
+    a.rel = 'noopener';
+    return a;
+  }
+  function abrirDelEnlace() {
+    const m = /^#p=([a-z0-9]+)$/.exec(location.hash);
+    if (!m) return;
+    history.replaceState(null, '', location.pathname + location.search);  // que «atrás» no la vuelva a abrir
+    if (porId.has(m[1])) abrirFicha(m[1]);
+  }
+
   // ---- Ficha de un producto ----
   function abrirFicha(id) {
     const p = porId.get(id);
@@ -451,7 +475,7 @@ footer .legal{ margin-top: 18px; font-size: 12px; color: var(--suave); }
     cerrar.dataset.cerrar = '';
     cerrar.setAttribute('aria-label', 'Cerrar');
     f.append(cerrar);
-    const texto = el('div', 'texto', el('h2', '', p.nombre), el('span', 'precio', precio(p.precio)));
+    const texto = el('div', 'texto', el('h2', '', p.nombre), el('span', 'precio', precio(p.precio)), compartir(p));
     if (p.descripcion) texto.append(el('p', 'desc', p.descripcion));
     const datos = [p.medidas && dato('medidas', p.medidas), p.filamento && dato('filamento', p.filamento),
       p.tiempo && dato('reloj', `${p.tiempo} de impresión`)].filter(Boolean);
@@ -655,6 +679,8 @@ footer .legal{ margin-top: 18px; font-size: 12px; color: var(--suave); }
   pintarPie();
   pintarCesta();
   $('buscar').addEventListener('input', filtrar);
+  window.addEventListener('hashchange', abrirDelEnlace);
+  abrirDelEnlace();
 })();
 </script>
 </body>

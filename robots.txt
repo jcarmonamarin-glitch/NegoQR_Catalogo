@@ -1,2 +1,11 @@
+User-agent: WhatsApp
+Allow: /
+
+User-agent: facebookexternalhit
+Allow: /
+
+User-agent: TelegramBot
+Allow: /
+
 User-agent: *
 Disallow: /
