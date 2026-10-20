@@ -1,0 +1,31 @@
+{
+  "id": "./",
+  "name": "Pedidos · Catálogo",
+  "short_name": "Pedidos",
+  "lang": "es",
+  "description": "Los pedidos del catálogo web: estado, cobro y forma de pago.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0b1113",
+  "theme_color": "#0b1113",
+  "icons": [
+    {
+      "src": "icono-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icono-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "icono-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

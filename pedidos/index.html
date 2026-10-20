@@ -1,0 +1,619 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pedidos · Catálogo</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#0b1113">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icono-192.png">
+<link rel="apple-touch-icon" href="icono-192.png">
+<!--
+  Página de pedidos para el móvil (la genera catalogo/web.py y se publica con el catálogo, en pedidos/). Es la página
+  «Pedidos» de la app (static/js/pedidos.js y static/css/pedidos.css van aquí dentro), pero habla directamente con el
+  script de la hoja de Google, sin la app. No lleva ningún pedido ni la clave: la clave llega tras «#» al escanear el
+  QR de la app (Pedidos → «En el móvil») y se queda en este móvil.
+-->
+<style>
+/* Lo de static/css/base.css que usa la página, con el mismo aspecto pero sin desenfoques (en el móvil van a tirones) */
+:root{
+  --bg: #0b1113;
+  --panel: rgba(26, 36, 39, .86);
+  --line: rgba(190, 230, 220, .11);
+  --line-fuerte: rgba(190, 230, 220, .2);
+  --acrilico: none;
+  --radio: 16px;
+  --ink: #eef3f2;
+  --ink-dim: #9fb0ad;
+  --ink-faint: #6b7b79;
+  --accent: #3ddc97;
+  --accent-dim: #2a8f66;
+  --mono: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  --sans: system-ui, "Segoe UI", Roboto, sans-serif;
+  --borde-x: max(16px, env(safe-area-inset-left), env(safe-area-inset-right));
+}
+*{ box-sizing: border-box; }
+html{ background: var(--bg); color-scheme: dark; -webkit-text-size-adjust: 100%; }
+body{ margin: 0; min-height: 100vh; color: var(--ink); background: var(--bg); font-family: var(--sans); line-height: 1.45;
+  -webkit-tap-highlight-color: transparent; }
+body::before{ content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(60vmax 40vmax at 0% 0%, rgba(61, 220, 151, .16), transparent 70%),
+    radial-gradient(50vmax 40vmax at 100% 10%, rgba(40, 110, 224, .16), transparent 70%),
+    radial-gradient(60vmax 40vmax at 70% 100%, rgba(150, 80, 230, .12), transparent 70%); }
+a{ color: var(--accent); }
+[hidden]{ display: none !important; }
+
+input, select{ width: 100%; background: rgba(6, 10, 12, .5); border: 1px solid var(--line-fuerte); color: var(--ink);
+  padding: 8px 10px; border-radius: 10px; font-family: var(--sans); font-size: 16px; outline: none; }
+select option{ background: #1a2225; }
+input::placeholder{ color: var(--ink-faint); }
+input:focus, select:focus{ border-color: var(--accent-dim); box-shadow: 0 0 0 3px rgba(61, 220, 151, .16); }
+button{ font-family: var(--sans); font-weight: 600; font-size: 14px; border-radius: 10px; border: 1px solid transparent;
+  padding: 10px 14px; cursor: pointer; touch-action: manipulation; color: var(--ink); }
+button:active:not(:disabled){ transform: translateY(1px); }
+.btn-primary{ background: linear-gradient(135deg, #52e8a6, #2fc4a0); color: #06120d; }
+.btn-primary:disabled{ background: rgba(80, 96, 94, .45); color: #7c8b88; }
+.btn-ghost{ background: rgba(255, 255, 255, .04); border-color: var(--line-fuerte); color: var(--ink); }
+.btn-link{ background: none; border: none; padding: 0; color: var(--accent); font-size: inherit; font-weight: 600; }
+.hint{ font-size: 13px; color: var(--ink-dim); margin: 6px 0 0; }
+.panel{ background: var(--panel); border: 1px solid var(--line); border-radius: var(--radio); padding: 14px; }
+.panel h2{ margin: 0 0 6px; font-size: 18px; }
+.panel p{ margin: 0 0 8px; }
+
+/* Cabecera fija arriba: el título, cuándo se leyó y los botones (siempre a mano al bajar por la lista) */
+.cabecera{ position: sticky; top: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: max(10px, env(safe-area-inset-top)) var(--borde-x) 10px; background: var(--bg);
+  border-bottom: 1px solid var(--line); }
+.cabecera h1{ margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -.02em; line-height: 1.15; }
+.cabecera .estado{ display: block; font: 12px/1.4 var(--mono); color: var(--accent); white-space: nowrap; }
+.cab-acciones{ display: flex; align-items: center; gap: 8px; flex: none; }
+.cab-acciones .boton-enlace, .cab-acciones button{ min-height: 42px; padding: 0 14px; font-size: 14px; }
+.cab-acciones .boton-enlace{ color: var(--ink); background: rgba(255, 255, 255, .04); }
+
+.wrap{ padding: 12px var(--borde-x) max(28px, env(safe-area-inset-bottom)); max-width: 720px; margin: 0 auto; }
+#contenido > .panel{ padding: 12px; }
+.pie{ margin-top: 22px; text-align: center; }
+.pie .hint{ margin-top: 10px; }
+#instalar{ width: 100%; min-height: 46px; }
+
+.toast{ position: fixed; left: 50%; bottom: max(20px, env(safe-area-inset-bottom)); z-index: 50; width: max-content;
+  max-width: calc(100vw - 32px); transform: translateX(-50%) translateY(20px); padding: 11px 16px; border-radius: 12px;
+  background: #3ddc97; color: #06120d; font-size: 14px; font-weight: 600; text-align: center; opacity: 0; pointer-events: none;
+  box-shadow: 0 14px 40px -12px rgba(0, 0, 0, .7); transition: opacity .18s ease, transform .18s ease; }
+.toast.show{ opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* static/css/pedidos.css, igual que en la app */
+/* Pedidos de la web (static/js/pedidos.js): resumen arriba y una tarjeta por pedido con su estado y su cobro.
+   La página del móvil (web/pedidos.html) lleva este mismo archivo dentro: lo de pantallas estrechas va al final */
+.boton-enlace{ display:inline-flex; align-items:center; padding: 10px 16px; border-radius: 10px; border: 1px solid var(--line-fuerte);
+  font-weight: 600; font-size: 13.5px; text-decoration: none; }
+.aviso-pedidos h2{ margin: 0 0 6px; font-size: 18px; }
+.aviso-pedidos p{ margin: 0 0 8px; max-width: 90ch; }
+
+.resumen-pedidos{ display:grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.cifra{ background: var(--panel); border: 1px solid var(--line); border-radius: var(--radio); padding: 14px 16px;
+  backdrop-filter: var(--acrilico); }
+.cifra .num{ font-size: 24px; font-weight: 800; letter-spacing: -0.02em; }
+.cifra .que{ font-size: 12.5px; color: var(--ink-dim); }
+.cifra.aviso .num{ color: #f5b14a; }
+.cifra.bien .num{ color: var(--accent); }
+.cifra.lista{ grid-column: span 2; }
+.cifra.lista summary{ display:flex; justify-content: space-between; align-items:center; gap: 8px; cursor: pointer; list-style: none; }
+.cifra.lista summary::-webkit-details-marker{ display: none; }
+.cifra.lista summary::after{ content: "▾"; font-size: 12px; transition: transform .15s; }
+.cifra.lista:not([open]) summary::after{ transform: rotate(-90deg); }
+.cifra.lista ol{ margin: 6px 0 0; padding-left: 20px; font-size: 13px; }
+.cifra.lista li{ margin: 2px 0; }
+.cifra.lista .n{ color: var(--ink-dim); font-variant-numeric: tabular-nums; }
+
+.barra-pedidos{ display:flex; flex-wrap: wrap; align-items:center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+.barra-pedidos input[type=search]{ max-width: 340px; }
+.filtros{ display:flex; flex-wrap:wrap; gap: 4px; }
+.filtros button{ padding: 4px 11px; font-size: 12.5px; border-radius: 999px; border: 1px solid var(--line); background: transparent;
+  color: var(--ink-dim); }
+.filtros button.activo{ border-color: var(--accent); color: var(--accent); }
+.filtros .cuenta{ margin-left: 6px; font: 600 11px/1 var(--mono); color: var(--ink-faint); }
+.filtros button.activo .cuenta{ color: inherit; }
+
+.lista-pedidos{ display:flex; flex-direction:column; gap: 10px; }
+.lista-pedidos .vacio{ margin: 0; padding: 18px 0; text-align: center; color: var(--ink-dim); }
+.pedido{ border: 1px solid var(--line); border-left: 4px solid var(--line-fuerte); border-radius: 12px; padding: 12px 14px;
+  background: rgba(255, 255, 255, .02); }
+.pedido.pagado{ border-left-color: var(--accent); }
+.pedido.por-cobrar{ border-left-color: #f5b14a; }
+.pedido.cancelado{ opacity: .55; }
+.pedido-cab{ display:flex; flex-wrap:wrap; align-items:baseline; gap: 4px 14px; }
+.pedido-cab .num{ font-weight: 800; }
+.pedido-cab .quien{ font-weight: 700; overflow-wrap: anywhere; }
+.pedido-cab .fecha, .pedido-cab .tel{ color: var(--ink-dim); font-size: 13px; }
+.pedido-cab .total{ margin-left: auto; font-size: 17px; font-weight: 800; white-space: nowrap; }
+.pedido ul{ margin: 8px 0 0; padding-left: 18px; font-size: 13.5px; }
+.pedido li{ margin: 2px 0; }
+.pedido .detalle{ display:block; color: var(--accent); font-size: 12.5px; }
+.pedido .comentario{ margin: 6px 0 0; font-size: 13px; color: var(--ink-dim); white-space: pre-line; }
+.pedido-acciones{ display:flex; flex-wrap:wrap; align-items:center; gap: 8px 16px; margin-top: 10px; padding-top: 10px;
+  border-top: 1px solid var(--line); }
+.pedido-acciones label{ display:flex; align-items:center; gap: 6px; font-size: 13px; margin: 0; }
+.pedido-acciones select{ width: auto; padding: 5px 8px; font-size: 13px; }
+.pedido-acciones input[type=checkbox]{ width: 18px; height: 18px; accent-color: var(--accent); margin: 0; }
+.pedido-acciones .guardando{ font-size: 12px; color: var(--ink-faint); }
+
+/* «📱 En el móvil» (static/js/pedidos-app.js): el QR con el enlace y la clave */
+.qr-movil{ width: 210px; margin: 0 auto 12px; border-radius: 12px; overflow: hidden; background: #fff; }
+.qr-movil svg{ display:block; width: 100%; height: auto; }
+.qr-estado{ color: var(--accent); }
+.qr-estado:empty{ display: none; }
+
+/* ---- Pantallas estrechas: el móvil (393 px de ancho en un POCO X5 Pro) y la app en una ventana estrecha ----
+   Cada pedido: número, cliente y total arriba; la fecha y el WhatsApp debajo; y para marcarlo, controles grandes
+   (46 px de alto, letra de 16 px) con «Pagado» ocupando toda la fila para acertar con el dedo */
+@media (max-width: 600px){
+  .resumen-pedidos{ grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+  .cifra{ padding: 10px 12px; border-radius: 12px; }
+  .cifra .num{ font-size: 19px; }
+  .cifra .que{ font-size: 12px; }
+  .cifra.lista{ grid-column: 1 / -1; }
+  .cifra.lista summary{ min-height: 26px; font-size: 13px; }
+  .cifra.lista ol{ font-size: 14px; }
+
+  .barra-pedidos{ flex-direction: column; align-items: stretch; gap: 10px; }
+  .barra-pedidos input[type=search]{ max-width: none; padding: 11px 12px; font-size: 16px; }
+  .filtros{ gap: 6px; }
+  .filtros button{ padding: 8px 12px; font-size: 13.5px; }
+
+  .pedido{ padding: 12px; }
+  /* Dos filas: Nº, cliente (lo que sobre, en varias líneas si hace falta) y total a la derecha; debajo, la fecha y el
+     WhatsApp a la derecha. El ::after (todo el ancho) hace de salto entre las dos */
+  .pedido-cab{ gap: 3px 8px; }
+  .pedido-cab::after{ content: ""; order: 4; flex-basis: 100%; }
+  .pedido-cab .num{ order: 1; }
+  .pedido-cab .quien{ order: 2; flex: 1 1 0; min-width: 0; }
+  .pedido-cab .total{ order: 3; }
+  .pedido-cab .fecha{ order: 5; align-self: center; }
+  .pedido-cab .tel{ order: 6; margin-left: auto; padding: 7px 12px; border-radius: 999px; font-size: 14px; font-weight: 600;
+    text-decoration: none; color: #74e3a4; background: rgba(37, 211, 102, .12); border: 1px solid rgba(37, 211, 102, .35); }
+  .pedido-cab .tel::before{ content: "💬 "; }
+  .pedido ul{ font-size: 14.5px; }
+  .pedido .detalle{ font-size: 13.5px; }
+  .pedido .comentario{ font-size: 14px; }
+
+  .pedido-acciones{ display:grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px;
+    grid-template-areas: "estado forma" "pagado pagado" "nota nota"; }
+  .pedido-acciones label{ flex-direction: column; align-items: stretch; gap: 4px; font-size: 12px; color: var(--ink-dim); }
+  .pedido-acciones .campo-estado{ grid-area: estado; }
+  .pedido-acciones .campo-forma{ grid-area: forma; }
+  .pedido-acciones .campo-pagado{ grid-area: pagado; flex-direction: row; align-items: center; gap: 10px; min-height: 46px;
+    padding: 0 12px; border: 1px solid var(--line-fuerte); border-radius: 10px; font-size: 15px; font-weight: 600; color: var(--ink); }
+  .pedido.pagado .campo-pagado{ color: var(--accent); border-color: rgba(61, 220, 151, .55); background: rgba(61, 220, 151, .1); }
+  .pedido-acciones select{ width: 100%; min-height: 46px; font-size: 16px; }
+  .pedido-acciones input[type=checkbox]{ width: 24px; height: 24px; }
+  .pedido-acciones .guardando{ grid-area: nota; font-size: 13px; }
+  .pedido-acciones .guardando:empty{ display: none; }
+}
+
+</style>
+</head>
+<body>
+<header class="cabecera">
+  <div>
+    <h1>Pedidos</h1>
+    <span class="estado" id="estado" role="status">Cargando…</span>
+  </div>
+  <div class="cab-acciones">
+    <a class="boton-enlace" id="abrirHoja" href="#" target="_blank" rel="noopener" hidden>Hoja ↗</a>
+    <button type="button" class="btn-primary" id="actualizar">↻ Actualizar</button>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="panel" id="preparar" hidden>
+    <h2 id="prepararTitulo"></h2>
+    <p id="prepararTexto"></p>
+  </section>
+
+  <section class="panel aviso-pedidos" id="sinConexion" hidden>
+    <h2>No se pueden leer los pedidos</h2>
+    <p id="sinConexionMotivo"></p>
+    <p class="hint">Cuando esté arreglado, pulsa «Actualizar».</p>
+  </section>
+
+  <div id="contenido" hidden>
+    <section class="resumen-pedidos" id="resumen"></section>
+
+    <section class="panel">
+      <div class="barra-pedidos">
+        <input type="search" id="buscar" placeholder="Buscar cliente, producto o color" enterkeyhint="search">
+        <div class="filtros" role="group" aria-label="Filtrar">
+          <button type="button" class="activo" data-filtro="todos">Todos</button>
+          <button type="button" data-filtro="cobrar">Por cobrar</button>
+          <button type="button" data-filtro="abiertos">Por hacer o entregar</button>
+          <button type="button" data-filtro="cancelados">Cancelados</button>
+        </div>
+      </div>
+      <div class="lista-pedidos" id="lista"></div>
+    </section>
+  </div>
+
+  <footer class="pie">
+    <button type="button" class="btn-ghost" id="instalar" hidden>Instalar como app</button>
+    <p class="hint" id="consejoInstalar" hidden>Para tenerla como una app: menú del navegador (⋮) → «Añadir a pantalla de
+      inicio».</p>
+    <p class="hint"><a href="../">Ver el catálogo</a><span id="olvidarCaja" hidden> · <button type="button" class="btn-link"
+      id="olvidar">Olvidar la clave en este móvil</button></span></p>
+  </footer>
+</main>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+// Pedidos de la web. La página «Pedidos» de la app y la del móvil (web/pedidos.html, que se publica con el catálogo)
+// son esta misma: solo cambia de dónde salen los pedidos (`fuente`). La app los pide a su servidor (pedidos-app.js) y
+// el móvil, directamente al script de la hoja de Google. Aquí se leen las líneas de cada pedido, se hace el resumen y
+// se pinta todo; cada cambio de estado, cobro o forma de pago va al momento a la hoja.
+//   Pedidos.iniciar({ leer: async () => ({ pedidos, hoja, estados, formas }), actualizar: async (numero, cambios) => {} })
+const Pedidos = (() => {
+  // «2 × Chapa para mascota (2,50 €) — Chapa: Negro · Borde y letras: Amarillo · Nombre: «Milo»»
+  const LINEA = /^\s*(\d+)\s*×\s*(.+?)\s*\(([\d.,]+)\s*€\)\s*(?:—\s*(.*))?$/;
+
+  // Las líneas de la celda «Productos»: [{cantidad, nombre, precio, detalle}] (las que no se entiendan, tal cual)
+  function lineas(productos) {
+    const resultado = [];
+    for (const texto of String(productos || '').split(/\r?\n/)) {
+      const m = texto.match(LINEA);
+      if (m) {
+        resultado.push({ cantidad: Number(m[1]), nombre: m[2], precio: Number(m[3].replace(/\./g, '').replace(',', '.')),
+          detalle: (m[4] || '').trim() });
+      } else if (texto.trim()) {
+        resultado.push({ cantidad: 0, nombre: texto.trim(), precio: 0, detalle: '' });
+      }
+    }
+    return resultado;
+  }
+
+  // Cobrado, pendiente de cobro (sin cancelados), lo más pedido y los colores que más se piden (para comprar rollos)
+  function resumen(pedidos) {
+    const vivos = pedidos.filter((p) => p.estado !== 'Cancelado');
+    const productos = new Map(), colores = new Map();
+    const contar = (mapa, clave, n) => mapa.set(clave, (mapa.get(clave) || 0) + n);
+    for (const p of vivos) {
+      for (const l of p.lineas) {
+        contar(productos, l.nombre, l.cantidad);
+        // «Blanco» o «Chapa: Negro · Letras: Oro»; el texto del cliente va el último y entre «», sin colores
+        for (const parte of (l.detalle || '').split('«')[0].split(' · ')) {
+          const color = (parte.includes(': ') ? parte.slice(parte.lastIndexOf(': ') + 2) : parte).trim();
+          if (color) contar(colores, color, l.cantidad);
+        }
+      }
+    }
+    const suma = (lista) => Math.round(lista.reduce((t, p) => t + p.total, 0) * 100) / 100;
+    const deMasAMenos = (mapa) => [...mapa].sort((a, b) => b[1] - a[1]).slice(0, 10);  // empates: por orden de llegada
+    return {
+      pedidos: pedidos.length, cancelados: pedidos.length - vivos.length, importe: suma(vivos),
+      cobrado: suma(pedidos.filter((p) => p.pagado)), pendiente: suma(vivos.filter((p) => !p.pagado)),
+      entregado_sin_cobrar: suma(vivos.filter((p) => p.estado === 'Entregado' && !p.pagado)),
+      mas_pedidos: deMasAMenos(productos), colores: deMasAMenos(colores),
+    };
+  }
+
+  function el(etiqueta, clase, ...hijos) {
+    const e = document.createElement(etiqueta);
+    if (clase) e.className = clase;
+    e.append(...hijos.filter((h) => h !== null && h !== undefined && h !== false));
+    return e;
+  }
+
+  function aviso(texto) {
+    const t = document.getElementById('toast');
+    t.textContent = texto;
+    t.classList.add('show');
+    clearTimeout(aviso.h);
+    aviso.h = setTimeout(() => t.classList.remove('show'), 2600);
+  }
+
+  function iniciar(fuente) {
+    const $ = (id) => document.getElementById(id);
+    const euros = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' });
+    const fecha = new Intl.DateTimeFormat('es-ES', { dateStyle: 'medium', timeStyle: 'short' });
+    const hora = new Intl.DateTimeFormat('es-ES', { timeStyle: 'short' });
+    const normalizar = (t) => String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+    // En el móvil las listas del resumen empiezan plegadas: lo primero que se quiere ver son los pedidos
+    const estrecha = matchMedia('(max-width: 600px)').matches;
+    const plegadas = {};
+
+    let datos = null;  // {pedidos, resumen, hoja, estados, formas}
+    let filtro = 'todos';
+    let leido = 0;  // cuándo se leyó la hoja por última vez
+    let ocupada = 0;  // lecturas y cambios en marcha
+
+    // ---- Resumen: lo que falta por cobrar y lo que más se pide (también los colores, para comprar rollos) ----
+    function pintarResumen() {
+      const r = datos.resumen;
+      const cifra = (num, que, clase = '') => el('div', `cifra ${clase}`, el('div', 'num', num), el('div', 'que', que));
+      const lista = (titulo, filas) => {
+        const d = el('details', 'cifra lista', el('summary', 'que', titulo),
+          filas.length ? el('ol', '', ...filas.map(([nombre, n]) => el('li', '', `${nombre} `, el('span', 'n', `× ${n}`))))
+            : el('p', 'hint', 'Aún nada.'));
+        d.open = !(titulo in plegadas ? plegadas[titulo] : estrecha);
+        d.addEventListener('toggle', () => { plegadas[titulo] = !d.open; });
+        return d;
+      };
+      $('resumen').replaceChildren(
+        cifra(euros.format(r.pendiente), 'Pendiente de cobro', r.pendiente > 0 ? 'aviso' : ''),
+        cifra(euros.format(r.entregado_sin_cobrar), 'Entregado y sin cobrar', r.entregado_sin_cobrar > 0 ? 'aviso' : ''),
+        cifra(euros.format(r.cobrado), 'Cobrado', 'bien'),
+        cifra(String(r.pedidos - r.cancelados), `Pedidos${r.cancelados ? ` (y ${r.cancelados} cancelados)` : ''}`),
+        lista('Lo más pedido', r.mas_pedidos),
+        lista('Colores más pedidos', r.colores),
+      );
+    }
+
+    // ---- Lista ----
+    const FILTROS = {
+      todos: () => true,
+      cobrar: (p) => !p.pagado && p.estado !== 'Cancelado',
+      abiertos: (p) => !['Entregado', 'Cancelado'].includes(p.estado),
+      cancelados: (p) => p.estado === 'Cancelado',
+    };
+    document.querySelectorAll('[data-filtro]').forEach((b) => b.addEventListener('click', () => {
+      filtro = b.dataset.filtro;
+      document.querySelectorAll('[data-filtro]').forEach((x) => x.classList.toggle('activo', x === b));
+      pintarLista();
+    }));
+    $('buscar').addEventListener('input', () => pintarLista());
+
+    // Cuántos hay en cada filtro, en su botón
+    function pintarCuentas() {
+      document.querySelectorAll('[data-filtro]').forEach((b) => {
+        let cuenta = b.querySelector('.cuenta');
+        if (!cuenta) b.append(cuenta = el('span', 'cuenta'));
+        cuenta.textContent = String(datos.pedidos.filter(FILTROS[b.dataset.filtro]).length);
+      });
+    }
+
+    function waDe(telefono) {
+      const d = String(telefono || '').replace(/\D/g, '');
+      return d.length === 9 ? `34${d}` : d;
+    }
+
+    function pintarLista() {
+      const busca = normalizar($('buscar').value.trim());
+      const pedidos = datos.pedidos.filter(FILTROS[filtro]).filter((p) => !busca || normalizar(
+        `${p.numero} ${p.nombre} ${p.apellidos} ${p.telefono} ${p.productos} ${p.comentario}`).includes(busca));
+      $('lista').replaceChildren(...(pedidos.length ? pedidos.map(tarjeta)
+        : [el('p', 'vacio', datos.pedidos.length ? 'Ningún pedido coincide.' : 'Aún no ha llegado ningún pedido desde la web.')]));
+    }
+
+    function tarjeta(p) {
+      const tel = el('a', 'tel', p.telefono);
+      tel.href = `https://wa.me/${waDe(p.telefono)}`;
+      tel.target = '_blank';
+      tel.rel = 'noopener';
+      tel.title = 'Escribirle por WhatsApp';
+      const cuando = p.fecha && !Number.isNaN(Date.parse(p.fecha)) ? fecha.format(new Date(p.fecha)) : p.fecha;
+      const lineasPedido = el('ul', '', ...p.lineas.map((l) => el('li', '',
+        l.cantidad ? `${l.cantidad} × ${l.nombre} (${euros.format(l.precio)})` : l.nombre,
+        l.detalle ? el('span', 'detalle', l.detalle) : null)));
+
+      const estado = el('select');
+      datos.estados.forEach((e) => estado.append(new Option(e, e, false, e === p.estado)));
+      if (!datos.estados.includes(p.estado)) estado.append(new Option(p.estado || '—', p.estado, true, true));
+      const pagado = el('input');
+      pagado.type = 'checkbox';
+      pagado.checked = p.pagado;
+      const forma = el('select');
+      forma.append(new Option('—', ''));
+      datos.formas.forEach((f) => forma.append(new Option(f, f, false, f === p.forma)));
+      const nota = el('span', 'guardando');
+      const controles = [estado, pagado, forma];
+
+      const caja = el('article', 'pedido',
+        el('div', 'pedido-cab', el('span', 'num', `Nº ${p.numero}`), el('span', 'quien', `${p.nombre} ${p.apellidos}`), tel,
+          el('span', 'fecha', cuando), el('span', 'total', euros.format(p.total))),
+        lineasPedido,
+        p.comentario ? el('p', 'comentario', `«${p.comentario}»`) : null,
+        el('div', 'pedido-acciones',
+          el('label', 'campo-estado', 'Estado', estado),
+          el('label', 'campo-pagado', pagado, 'Pagado'),
+          el('label', 'campo-forma', 'Forma de pago', forma),
+          nota));
+      const pintarClase = () => {
+        caja.classList.toggle('pagado', p.pagado);
+        caja.classList.toggle('por-cobrar', !p.pagado && p.estado === 'Entregado');
+        caja.classList.toggle('cancelado', p.estado === 'Cancelado');
+      };
+      pintarClase();
+
+      async function cambiar(cambios, deshacer) {
+        nota.textContent = 'Guardando en la hoja…';
+        controles.forEach((c) => { c.disabled = true; });
+        ocupada++;
+        try {
+          await fuente.actualizar(p.numero, cambios);
+          Object.assign(p, cambios);
+          nota.textContent = '✓ Guardado';
+          setTimeout(() => { if (nota.textContent === '✓ Guardado') nota.textContent = ''; }, 2000);
+          datos.resumen = resumen(datos.pedidos);
+          pintarResumen();
+          pintarCuentas();
+          pintarClase();
+        } catch (e) {
+          deshacer();
+          nota.textContent = '';
+          aviso(`No se pudo guardar: ${e.message}`);
+        } finally {
+          ocupada--;
+          controles.forEach((c) => { c.disabled = false; });
+        }
+      }
+      estado.addEventListener('change', () => {
+        const antes = p.estado;
+        cambiar({ estado: estado.value }, () => { estado.value = antes; });
+      });
+      pagado.addEventListener('change', () => {
+        const antes = p.pagado;
+        // Al marcarlo pagado sin forma de pago, se pregunta con la vista: el desplegable queda a mano
+        cambiar({ pagado: pagado.checked }, () => { pagado.checked = antes; });
+        if (pagado.checked && !forma.value) forma.focus();
+      });
+      forma.addEventListener('change', () => {
+        const antes = p.forma;
+        cambiar({ forma: forma.value }, () => { forma.value = antes; });
+      });
+      return caja;
+    }
+
+    async function cargar() {
+      if (ocupada) return;
+      ocupada++;
+      $('estado').textContent = 'Leyendo la hoja…';
+      $('actualizar').disabled = true;
+      try {
+        const j = await fuente.leer();
+        const pedidos = (j.pedidos || []).map((p) => ({ ...p, lineas: lineas(p.productos) }))
+          .sort((a, b) => (b.numero || 0) - (a.numero || 0));  // el más nuevo primero
+        datos = { ...j, pedidos, resumen: resumen(pedidos) };
+        leido = Date.now();
+        $('sinConexion').hidden = true;
+        $('contenido').hidden = false;
+        if (j.hoja) { $('abrirHoja').href = j.hoja; $('abrirHoja').hidden = false; }
+        pintarResumen();
+        pintarCuentas();
+        pintarLista();
+        $('estado').textContent = `${pedidos.length} pedidos · ${hora.format(new Date())}`;
+      } catch (e) {
+        $('sinConexionMotivo').textContent = e.message;
+        $('sinConexion').hidden = false;
+        $('contenido').hidden = !datos;
+        $('estado').textContent = 'Sin conexión con la hoja';
+      } finally {
+        ocupada--;
+        $('actualizar').disabled = false;
+      }
+    }
+    $('actualizar').addEventListener('click', cargar);
+    // Al volver a la página (en el móvil, p. ej. desde WhatsApp) se vuelve a leer si hace rato: por si hay pedidos nuevos
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && datos && Date.now() - leido > 2 * 60 * 1000) cargar();
+    });
+    cargar();
+  }
+
+  return { iniciar, lineas, resumen, aviso };
+})();
+
+</script>
+<script>
+(() => {
+  const DIRECCION = "https://script.google.com/macros/s/AKfycbxSRWU7H3GYJGTxM7y1zY1OwjfMYUZvA-IjmLmyWoodvbArzvtc9yGPuL5rJ0LVe1R8/exec";  // la del script de la hoja (/exec), la misma a la que manda los pedidos el catálogo
+  const VERSION = 3;  // la del script que hace falta (catalogo/pedidos.py, VERSION_SCRIPT)
+  const ALMACEN = 'negoqr-pedidos-clave';
+  const $ = (id) => document.getElementById(id);
+
+  const leerClave = () => { try { return localStorage.getItem(ALMACEN) || ''; } catch { return ''; } };
+  const guardarClave = (c) => { try { if (c) localStorage.setItem(ALMACEN, c); else localStorage.removeItem(ALMACEN); } catch { /* sin almacén */ } };
+
+  // La clave llega tras «#» al escanear el QR de la app (lo que va tras «#» no sale del móvil): se guarda en el móvil y
+  // se quita de la dirección, para que no quede a la vista ni se comparta sin querer
+  const enlace = location.hash.match(/[#&]k=([A-Za-z0-9_-]{16,64})/);
+  if (enlace) {
+    guardarClave(enlace[1]);
+    history.replaceState(null, '', location.pathname + location.search);
+  }
+  const clave = enlace ? enlace[1] : leerClave();
+  // Si el enlace se abre con la página ya abierta, el navegador solo cambia lo de tras «#» (no la vuelve a cargar)
+  addEventListener('hashchange', () => { if (/[#&]k=/.test(location.hash)) location.reload(); });
+
+  async function alScript(cuerpo) {
+    const parar = new AbortController();
+    const plazo = setTimeout(() => parar.abort(), 30000);
+    try {
+      let r;
+      try {
+        // Texto plano, como los pedidos del catálogo: así el navegador no pide permiso antes (CORS) y Google contesta
+        r = await fetch(DIRECCION, { method: 'POST', body: JSON.stringify({ ...cuerpo, clave }), signal: parar.signal });
+      } catch (e) {
+        throw new Error(e.name === 'AbortError' ? 'La hoja tarda demasiado en responder: prueba otra vez.'
+          : 'No se pudo hablar con la hoja de pedidos. ¿Hay conexión?');
+      }
+      let j;
+      try {
+        j = await r.json();
+      } catch {
+        throw new Error('La hoja no ha respondido como se esperaba: en el ordenador, comprueba que el script está '
+          + 'publicado con acceso «Cualquier usuario».');
+      }
+      if ((j.version || 1) < VERSION) {
+        throw new Error('El script de la hoja es el de antes. En el ordenador: Productos → ⚙ Ajustes → Web del catálogo '
+          + '→ «Copiar el script»; pégalo en Apps Script y publícalo como «Nueva versión».');
+      }
+      if (!j.ok) {
+        throw new Error(j.codigo === 'clave' ? 'La clave de este móvil no es la del script. Vuelve a escanear el código '
+          + 'de la app (Pedidos → «📱 En el móvil»); si acabas de cambiar la clave, publica antes el script nuevo.'
+          : j.error || 'La hoja ha dado un error.');
+      }
+      return j;
+    } finally {
+      clearTimeout(plazo);
+    }
+  }
+
+  function preparar(titulo, texto) {
+    $('prepararTitulo').textContent = titulo;
+    $('prepararTexto').textContent = texto;
+    $('preparar').hidden = false;
+    $('estado').textContent = 'Sin leer';
+    $('actualizar').hidden = true;
+  }
+
+  if (!DIRECCION) {
+    preparar('Falta la dirección de la hoja', 'En el ordenador: Productos → ⚙ Ajustes → Web del catálogo, pega la '
+      + 'dirección del script de pedidos y vuelve a publicar la web.');
+  } else if (!clave) {
+    preparar('Falta la clave en este móvil', 'Para ver y marcar los pedidos desde aquí: en el ordenador, abre la app → '
+      + 'Pedidos → «📱 En el móvil» y escanea el código con la cámara. Solo hace falta una vez.');
+  } else {
+    Pedidos.iniciar({
+      leer: () => alScript({ accion: 'pedidos' }),
+      actualizar: (numero, cambios) => alScript({ accion: 'actualizar', numero, ...cambios }),
+    });
+    $('olvidarCaja').hidden = false;
+  }
+
+  // Olvidar la clave (p. ej. antes de prestar el móvil): dos toques, para no hacerlo sin querer
+  $('olvidar').addEventListener('click', () => {
+    const b = $('olvidar');
+    if (!b.dataset.seguro) {
+      b.dataset.seguro = '1';
+      b.textContent = '¿Seguro? Toca otra vez para olvidarla';
+      setTimeout(() => { delete b.dataset.seguro; b.textContent = 'Olvidar la clave en este móvil'; }, 4000);
+      return;
+    }
+    guardarClave('');
+    location.reload();
+  });
+
+  // Instalarla como una app (icono en la pantalla de inicio y sin la barra del navegador)
+  const instalada = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+  let peticion = null;
+  $('consejoInstalar').hidden = instalada;
+  addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    peticion = e;
+    $('instalar').hidden = false;
+    $('consejoInstalar').hidden = true;
+  });
+  $('instalar').addEventListener('click', async () => {
+    if (!peticion) return;
+    peticion.prompt();
+    await peticion.userChoice;
+    peticion = null;
+    $('instalar').hidden = true;
+  });
+  addEventListener('appinstalled', () => { $('instalar').hidden = true; $('consejoInstalar').hidden = true; });
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+})();
+</script>
+</body>
+</html>
