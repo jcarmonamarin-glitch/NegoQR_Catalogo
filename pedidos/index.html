@@ -118,21 +118,39 @@ button:active:not(:disabled){ transform: translateY(1px); }
 .filtros .cuenta{ margin-left: 6px; font: 600 11px/1 var(--mono); color: var(--ink-faint); }
 .filtros button.activo .cuenta{ color: inherit; }
 
-.lista-pedidos{ display:flex; flex-direction:column; gap: 10px; }
+.lista-pedidos{ display:flex; flex-direction:column; gap: 6px; }
 .lista-pedidos .vacio{ margin: 0; padding: 18px 0; text-align: center; color: var(--ink-dim); }
-.pedido{ border: 1px solid var(--line); border-left: 4px solid var(--line-fuerte); border-radius: 12px; padding: 12px 14px;
+.pedido{ border: 1px solid var(--line); border-left: 4px solid var(--line-fuerte); border-radius: 12px;
   background: rgba(255, 255, 255, .02); }
 .pedido.pagado{ border-left-color: var(--accent); }
 .pedido.por-cobrar{ border-left-color: #f5b14a; }
 .pedido.cancelado{ opacity: .55; }
-.pedido-cab{ display:flex; flex-wrap:wrap; align-items:baseline; gap: 4px 14px; }
-.pedido-cab .num{ font-weight: 800; }
-.pedido-cab .quien{ font-weight: 700; overflow-wrap: anywhere; }
+/* Plegado: una línea con el número, el cliente y el estado; al tocarla se despliega el resto (.pedido-cuerpo) */
+.pedido-linea{ display:flex; align-items:center; gap: 10px; padding: 10px 14px; cursor: pointer; list-style: none; }
+.pedido-linea::-webkit-details-marker{ display: none; }
+.pedido-linea::before{ content: "▸"; flex: none; font-size: 12px; color: var(--ink-faint); transition: transform .15s; }
+.pedido[open] > .pedido-linea::before{ transform: rotate(90deg); }
+.pedido-linea .num{ flex: none; font-weight: 800; }
+/* El nombre, entero si cabe en dos líneas */
+.pedido-linea .quien{ flex: 1; min-width: 0; font-weight: 650; line-height: 1.25; overflow-wrap: anywhere; overflow: hidden;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.pedido-linea .etiqueta{ flex: none; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--line-fuerte);
+  font-size: 12px; color: var(--ink-dim); white-space: nowrap; }
+.pedido.pagado .etiqueta{ color: var(--accent); border-color: rgba(61, 220, 151, .45); }
+.pedido.por-cobrar .etiqueta{ color: #f5b14a; border-color: rgba(245, 177, 74, .45); }
+.pedido-cuerpo{ padding: 0 14px 12px; border-top: 1px solid var(--line); }
+.pedido-cab{ display:flex; flex-wrap:wrap; align-items:center; gap: 4px 14px; padding-top: 10px; }
 .pedido-cab .fecha, .pedido-cab .tel{ color: var(--ink-dim); font-size: 13px; }
-.pedido-cab .total{ margin-left: auto; font-size: 17px; font-weight: 800; white-space: nowrap; }
+.pedido-cab .total{ font-size: 17px; font-weight: 800; white-space: nowrap; }
+.pedido-cab .tel{ margin-left: auto; }
 .pedido ul{ margin: 8px 0 0; padding-left: 18px; font-size: 13.5px; }
 .pedido li{ margin: 2px 0; }
 .pedido .detalle{ display:block; color: var(--accent); font-size: 12.5px; }
+/* El código del producto (P-037) y, si es enlace, a su modelo en Printables o a su ficha */
+.pedido .ref{ display:flex; width: fit-content; margin: 3px 0 4px; padding: 2px 9px; border-radius: 999px;
+  border: 1px solid var(--line-fuerte); font: 600 12px/1.5 var(--mono); color: var(--ink-dim); text-decoration: none; }
+.pedido a.ref{ color: #7fb4ff; border-color: rgba(127, 180, 255, .45); background: rgba(127, 180, 255, .08); }
+.pedido a.ref:hover{ background: rgba(127, 180, 255, .16); }
 .pedido .comentario{ margin: 6px 0 0; font-size: 13px; color: var(--ink-dim); white-space: pre-line; }
 .pedido-acciones{ display:flex; flex-wrap:wrap; align-items:center; gap: 8px 16px; margin-top: 10px; padding-top: 10px;
   border-top: 1px solid var(--line); }
@@ -140,6 +158,13 @@ button:active:not(:disabled){ transform: translateY(1px); }
 .pedido-acciones select{ width: auto; padding: 5px 8px; font-size: 13px; }
 .pedido-acciones input[type=checkbox]{ width: 18px; height: 18px; accent-color: var(--accent); margin: 0; }
 .pedido-acciones .guardando{ font-size: 12px; color: var(--ink-faint); }
+/* Al marcarlo pagado sin forma de pago: «¿Cómo ha pagado?» con un botón por forma */
+.pregunta-forma{ display:flex; flex-wrap:wrap; align-items:center; gap: 6px; }
+.pregunta-forma[hidden]{ display: none; }
+.pregunta-forma .que{ font-size: 13px; font-weight: 600; }
+.pregunta-forma button{ padding: 5px 12px; border-radius: 999px; border: 1px solid var(--accent); background: transparent;
+  color: var(--accent); font-size: 13px; font-weight: 600; }
+.pregunta-forma button.cancelar{ border-color: var(--line-fuerte); color: var(--ink-dim); }
 
 /* «📱 En el móvil» (static/js/pedidos-app.js): el QR con el enlace y la clave */
 .qr-movil{ width: 210px; margin: 0 auto 12px; border-radius: 12px; overflow: hidden; background: #fff; }
@@ -148,8 +173,8 @@ button:active:not(:disabled){ transform: translateY(1px); }
 .qr-estado:empty{ display: none; }
 
 /* ---- Pantallas estrechas: el móvil (393 px de ancho en un POCO X5 Pro) y la app en una ventana estrecha ----
-   Cada pedido: número, cliente y total arriba; la fecha y el WhatsApp debajo; y para marcarlo, controles grandes
-   (46 px de alto, letra de 16 px) con «Pagado» ocupando toda la fila para acertar con el dedo */
+   Cada pedido, plegado en una línea de 52 px; desplegado, la fecha, el total y el WhatsApp arriba y, para marcarlo,
+   controles grandes (46 px de alto, letra de 16 px) con «Pagado» ocupando toda la fila para acertar con el dedo */
 @media (max-width: 600px){
   .resumen-pedidos{ grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
   .cifra{ padding: 10px 12px; border-radius: 12px; }
@@ -164,24 +189,24 @@ button:active:not(:disabled){ transform: translateY(1px); }
   .filtros{ gap: 6px; }
   .filtros button{ padding: 8px 12px; font-size: 13.5px; }
 
-  .pedido{ padding: 12px; }
-  /* Dos filas: Nº, cliente (lo que sobre, en varias líneas si hace falta) y total a la derecha; debajo, la fecha y el
-     WhatsApp a la derecha. El ::after (todo el ancho) hace de salto entre las dos */
-  .pedido-cab{ gap: 3px 8px; }
-  .pedido-cab::after{ content: ""; order: 4; flex-basis: 100%; }
-  .pedido-cab .num{ order: 1; }
-  .pedido-cab .quien{ order: 2; flex: 1 1 0; min-width: 0; }
-  .pedido-cab .total{ order: 3; }
-  .pedido-cab .fecha{ order: 5; align-self: center; }
-  .pedido-cab .tel{ order: 6; margin-left: auto; padding: 7px 12px; border-radius: 999px; font-size: 14px; font-weight: 600;
+  /* La línea plegada, alta para acertar con el dedo; desplegado: la fecha y el total, y el WhatsApp a la derecha */
+  .pedido-linea{ min-height: 52px; padding: 8px 12px; gap: 8px; font-size: 15.5px; }
+  .pedido-linea .etiqueta{ font-size: 12.5px; }
+  .pedido-cuerpo{ padding: 0 12px 12px; }
+  .pedido-cab{ gap: 4px 10px; }
+  .pedido-cab .tel{ padding: 7px 12px; border-radius: 999px; font-size: 14px; font-weight: 600;
     text-decoration: none; color: #74e3a4; background: rgba(37, 211, 102, .12); border: 1px solid rgba(37, 211, 102, .35); }
   .pedido-cab .tel::before{ content: "💬 "; }
   .pedido ul{ font-size: 14.5px; }
   .pedido .detalle{ font-size: 13.5px; }
+  .pedido .ref{ margin: 5px 0 6px; padding: 7px 12px; font-size: 13.5px; }  /* para acertar con el dedo */
   .pedido .comentario{ font-size: 14px; }
 
   .pedido-acciones{ display:grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px;
-    grid-template-areas: "estado forma" "pagado pagado" "nota nota"; }
+    grid-template-areas: "estado forma" "pagado pagado" "pregunta pregunta" "nota nota"; }
+  .pregunta-forma{ grid-area: pregunta; display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .pregunta-forma .que{ grid-column: 1 / -1; font-size: 15px; }
+  .pregunta-forma button{ min-height: 44px; padding: 0 6px; border-radius: 10px; font-size: 15px; }
   .pedido-acciones label{ flex-direction: column; align-items: stretch; gap: 4px; font-size: 12px; color: var(--ink-dim); }
   .pedido-acciones .campo-estado{ grid-area: estado; }
   .pedido-acciones .campo-forma{ grid-area: forma; }
@@ -227,10 +252,11 @@ button:active:not(:disabled){ transform: translateY(1px); }
       <div class="barra-pedidos">
         <input type="search" id="buscar" placeholder="Buscar cliente, producto o color" enterkeyhint="search">
         <div class="filtros" role="group" aria-label="Filtrar">
-          <button type="button" class="activo" data-filtro="todos">Todos</button>
+          <button type="button" class="activo" data-filtro="pendientes">Pendientes</button>
+          <button type="button" data-filtro="entregados">Entregados</button>
           <button type="button" data-filtro="cobrar">Por cobrar</button>
-          <button type="button" data-filtro="abiertos">Por hacer o entregar</button>
           <button type="button" data-filtro="cancelados">Cancelados</button>
+          <button type="button" data-filtro="todos">Todos</button>
         </div>
       </div>
       <div class="lista-pedidos" id="lista"></div>
@@ -251,25 +277,34 @@ button:active:not(:disabled){ transform: translateY(1px); }
 // Pedidos de la web. La página «Pedidos» de la app y la del móvil (web/pedidos.html, que se publica con el catálogo)
 // son esta misma: solo cambia de dónde salen los pedidos (`fuente`). La app los pide a su servidor (pedidos-app.js) y
 // el móvil, directamente al script de la hoja de Google. Aquí se leen las líneas de cada pedido, se hace el resumen y
-// se pinta todo; cada cambio de estado, cobro o forma de pago va al momento a la hoja.
+// se pinta todo; cada cambio de estado, cobro o forma de pago va al momento a la hoja. Los pedidos van por pestañas
+// (`seccion`: «Pendientes», «Entregados» —entregados y pagados— y «Cancelados»), cada uno plegado en una línea.
 //   Pedidos.iniciar({ leer: async () => ({ pedidos, hoja, estados, formas }), actualizar: async (numero, cambios) => {} })
 const Pedidos = (() => {
-  // «2 × Chapa para mascota (2,50 €) — Chapa: Negro · Borde y letras: Amarillo · Nombre: «Milo»»
-  const LINEA = /^\s*(\d+)\s*×\s*(.+?)\s*\(([\d.,]+)\s*€\)\s*(?:—\s*(.*))?$/;
+  // «2 × P-037 Chapa para mascota (2,50 €) — Chapa: Negro · Borde y letras: Amarillo · Nombre: «Milo»». El código
+  // (P-037) lo apunta el script desde su versión 5: los pedidos de antes no lo llevan
+  const LINEA = /^\s*(\d+)\s*×\s*(?:(P-\d{3,6})\s+)?(.+?)\s*\(([\d.,]+)\s*€\)\s*(?:—\s*(.*))?$/;
 
-  // Las líneas de la celda «Productos»: [{cantidad, nombre, precio, detalle}] (las que no se entiendan, tal cual)
+  // Las líneas de la celda «Productos»: [{cantidad, ref, nombre, precio, detalle}] (las que no se entiendan, tal cual)
   function lineas(productos) {
     const resultado = [];
     for (const texto of String(productos || '').split(/\r?\n/)) {
       const m = texto.match(LINEA);
       if (m) {
-        resultado.push({ cantidad: Number(m[1]), nombre: m[2], precio: Number(m[3].replace(/\./g, '').replace(',', '.')),
-          detalle: (m[4] || '').trim() });
+        resultado.push({ cantidad: Number(m[1]), ref: m[2] || '', nombre: m[3],
+          precio: Number(m[4].replace(/\./g, '').replace(',', '.')), detalle: (m[5] || '').trim() });
       } else if (texto.trim()) {
-        resultado.push({ cantidad: 0, nombre: texto.trim(), precio: 0, detalle: '' });
+        resultado.push({ cantidad: 0, ref: '', nombre: texto.trim(), precio: 0, detalle: '' });
       }
     }
     return resultado;
+  }
+
+  // En qué pestaña va un pedido: cancelado; entregado y pagado, que ya no tiene nada que hacer («Entregados»); o
+  // pendiente (lo demás: por hacer, hecho sin entregar, pagado por adelantado, entregado sin cobrar…)
+  function seccion(p) {
+    if (p.estado === 'Cancelado') return 'cancelados';
+    return p.pagado && p.estado === 'Entregado' ? 'entregados' : 'pendientes';
   }
 
   // Cobrado, pendiente de cobro (sin cancelados), lo más pedido y los colores que más se piden (para comprar rollos)
@@ -323,7 +358,8 @@ const Pedidos = (() => {
     const plegadas = {};
 
     let datos = null;  // {pedidos, resumen, hoja, estados, formas}
-    let filtro = 'todos';
+    let filtro = 'pendientes';
+    const abiertos = new Set();  // los pedidos desplegados (por su número): siguen así al volver a pintar la lista
     let leido = 0;  // cuándo se leyó la hoja por última vez
     let ocupada = 0;  // lecturas y cambios en marcha
 
@@ -349,13 +385,15 @@ const Pedidos = (() => {
       );
     }
 
-    // ---- Lista ----
+    // ---- Lista: una pestaña por sección (seccion) y dos más, «Por cobrar» y «Todos» ----
     const FILTROS = {
-      todos: () => true,
+      pendientes: (p) => seccion(p) === 'pendientes',
+      entregados: (p) => seccion(p) === 'entregados',
       cobrar: (p) => !p.pagado && p.estado !== 'Cancelado',
-      abiertos: (p) => !['Entregado', 'Cancelado'].includes(p.estado),
-      cancelados: (p) => p.estado === 'Cancelado',
+      cancelados: (p) => seccion(p) === 'cancelados',
+      todos: () => true,
     };
+    const NOMBRE_SECCION = { pendientes: 'Pendientes', entregados: 'Entregados', cancelados: 'Cancelados' };
     document.querySelectorAll('[data-filtro]').forEach((b) => b.addEventListener('click', () => {
       filtro = b.dataset.filtro;
       document.querySelectorAll('[data-filtro]').forEach((x) => x.classList.toggle('activo', x === b));
@@ -372,19 +410,38 @@ const Pedidos = (() => {
       });
     }
 
+    // El código del producto y, si la hoja tiene su enlace, a dónde lleva: su modelo en Printables (el nombre del pedido
+    // está traducido y no se parece al de allí) o su ficha en el catálogo
+    function referencia(ref, url) {
+      if (!/^https:\/\//.test(url || '')) return el('span', 'ref', ref);
+      const a = el('a', 'ref', `${ref} · ${/printables\.com/.test(url) ? 'Printables' : 'Ficha'} ↗`);
+      a.href = url;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      a.title = 'Abrir el producto';
+      return a;
+    }
+
     function waDe(telefono) {
       const d = String(telefono || '').replace(/\D/g, '');
       return d.length === 9 ? `34${d}` : d;
     }
+
+    const VACIO = {
+      pendientes: 'No hay pedidos pendientes.', entregados: 'Aún no hay pedidos entregados y pagados.',
+      cobrar: 'No hay nada por cobrar.', cancelados: 'No hay pedidos cancelados.', todos: 'No hay pedidos.',
+    };
 
     function pintarLista() {
       const busca = normalizar($('buscar').value.trim());
       const pedidos = datos.pedidos.filter(FILTROS[filtro]).filter((p) => !busca || normalizar(
         `${p.numero} ${p.nombre} ${p.apellidos} ${p.telefono} ${p.productos} ${p.comentario}`).includes(busca));
       $('lista').replaceChildren(...(pedidos.length ? pedidos.map(tarjeta)
-        : [el('p', 'vacio', datos.pedidos.length ? 'Ningún pedido coincide.' : 'Aún no ha llegado ningún pedido desde la web.')]));
+        : [el('p', 'vacio', !datos.pedidos.length ? 'Aún no ha llegado ningún pedido desde la web.'
+          : busca ? 'Ningún pedido coincide.' : VACIO[filtro])]));
     }
 
+    // Cada pedido, plegado en una línea (número, cliente y estado): al tocarla se despliega con todo lo demás
     function tarjeta(p) {
       const tel = el('a', 'tel', p.telefono);
       tel.href = `https://wa.me/${waDe(p.telefono)}`;
@@ -394,7 +451,8 @@ const Pedidos = (() => {
       const cuando = p.fecha && !Number.isNaN(Date.parse(p.fecha)) ? fecha.format(new Date(p.fecha)) : p.fecha;
       const lineasPedido = el('ul', '', ...p.lineas.map((l) => el('li', '',
         l.cantidad ? `${l.cantidad} × ${l.nombre} (${euros.format(l.precio)})` : l.nombre,
-        l.detalle ? el('span', 'detalle', l.detalle) : null)));
+        l.detalle ? el('span', 'detalle', l.detalle) : null,
+        l.ref ? referencia(l.ref, (p.enlaces || {})[l.ref]) : null)));
 
       const estado = el('select');
       datos.estados.forEach((e) => estado.append(new Option(e, e, false, e === p.estado)));
@@ -406,22 +464,49 @@ const Pedidos = (() => {
       forma.append(new Option('—', ''));
       datos.formas.forEach((f) => forma.append(new Option(f, f, false, f === p.forma)));
       const nota = el('span', 'guardando');
+      // Al marcarlo pagado sin forma de pago, se pregunta antes cómo ha pagado: si así queda entregado y pagado, se va
+      // a «Entregados» y luego habría que ir a buscarlo para ponérsela
+      const boton = (texto, alPulsar, clase = '') => {
+        const b = el('button', clase, texto);
+        b.type = 'button';
+        b.addEventListener('click', alPulsar);
+        return b;
+      };
+      const pagarCon = (f) => () => {
+        preguntaForma.hidden = true;
+        const antes = p.forma;
+        forma.value = f;
+        cambiar({ pagado: true, forma: f }, () => { pagado.checked = false; forma.value = antes; });
+      };
+      const preguntaForma = el('div', 'pregunta-forma', el('span', 'que', '¿Cómo ha pagado?'),
+        ...datos.formas.map((f) => boton(f, pagarCon(f))), boton('Sin indicar', pagarCon('')),
+        boton('Cancelar', () => { preguntaForma.hidden = true; pagado.checked = false; }, 'cancelar'));
+      preguntaForma.hidden = true;
       const controles = [estado, pagado, forma];
 
-      const caja = el('article', 'pedido',
-        el('div', 'pedido-cab', el('span', 'num', `Nº ${p.numero}`), el('span', 'quien', `${p.nombre} ${p.apellidos}`), tel,
-          el('span', 'fecha', cuando), el('span', 'total', euros.format(p.total))),
-        lineasPedido,
-        p.comentario ? el('p', 'comentario', `«${p.comentario}»`) : null,
-        el('div', 'pedido-acciones',
-          el('label', 'campo-estado', 'Estado', estado),
-          el('label', 'campo-pagado', pagado, 'Pagado'),
-          el('label', 'campo-forma', 'Forma de pago', forma),
-          nota));
+      const etiqueta = el('span', 'etiqueta');
+      const caja = el('details', 'pedido',
+        el('summary', 'pedido-linea', el('span', 'num', `Nº ${p.numero}`), el('span', 'quien', `${p.nombre} ${p.apellidos}`),
+          etiqueta),
+        el('div', 'pedido-cuerpo',
+          el('div', 'pedido-cab', el('span', 'fecha', cuando), el('span', 'total', euros.format(p.total)), tel),
+          lineasPedido,
+          p.comentario ? el('p', 'comentario', `«${p.comentario}»`) : null,
+          el('div', 'pedido-acciones',
+            el('label', 'campo-estado', 'Estado', estado),
+            el('label', 'campo-pagado', pagado, 'Pagado'),
+            el('label', 'campo-forma', 'Forma de pago', forma),
+            preguntaForma,
+            nota)));
+      caja.open = abiertos.has(p.numero);
+      caja.addEventListener('toggle', () => { if (caja.open) abiertos.add(p.numero); else abiertos.delete(p.numero); });
       const pintarClase = () => {
         caja.classList.toggle('pagado', p.pagado);
         caja.classList.toggle('por-cobrar', !p.pagado && p.estado === 'Entregado');
         caja.classList.toggle('cancelado', p.estado === 'Cancelado');
+        // Corta, para que quepa el nombre: «Sin cobrar» es entregado sin cobrar (va en ámbar, como su borde)
+        etiqueta.textContent = p.estado === 'Entregado' && !p.pagado ? 'Sin cobrar'
+          : `${p.estado || '—'}${p.pagado && p.estado !== 'Entregado' ? ' · pagado' : ''}`;
       };
       pintarClase();
 
@@ -431,6 +516,7 @@ const Pedidos = (() => {
         ocupada++;
         try {
           await fuente.actualizar(p.numero, cambios);
+          const antes = seccion(p);
           Object.assign(p, cambios);
           nota.textContent = '✓ Guardado';
           setTimeout(() => { if (nota.textContent === '✓ Guardado') nota.textContent = ''; }, 2000);
@@ -438,6 +524,12 @@ const Pedidos = (() => {
           pintarResumen();
           pintarCuentas();
           pintarClase();
+          // Entregado y pagado: se va a «Entregados» (y si se desmarca algo, vuelve a «Pendientes»)
+          if (seccion(p) !== antes) aviso(`Nº ${p.numero} pasa a ${NOMBRE_SECCION[seccion(p)]}`);
+          if (!FILTROS[filtro](p)) {
+            abiertos.delete(p.numero);
+            pintarLista();
+          }
         } catch (e) {
           deshacer();
           nota.textContent = '';
@@ -452,12 +544,16 @@ const Pedidos = (() => {
         cambiar({ estado: estado.value }, () => { estado.value = antes; });
       });
       pagado.addEventListener('change', () => {
+        if (pagado.checked && !forma.value) {
+          preguntaForma.hidden = false;
+          return;
+        }
+        preguntaForma.hidden = true;
         const antes = p.pagado;
-        // Al marcarlo pagado sin forma de pago, se pregunta con la vista: el desplegable queda a mano
         cambiar({ pagado: pagado.checked }, () => { pagado.checked = antes; });
-        if (pagado.checked && !forma.value) forma.focus();
       });
       forma.addEventListener('change', () => {
+        if (!preguntaForma.hidden) { pagarCon(forma.value)(); return; }  // contesta a «¿Cómo ha pagado?» con la lista
         const antes = p.forma;
         cambiar({ forma: forma.value }, () => { forma.value = antes; });
       });
@@ -500,14 +596,14 @@ const Pedidos = (() => {
     cargar();
   }
 
-  return { iniciar, lineas, resumen, aviso };
+  return { iniciar, lineas, resumen, seccion, aviso };
 })();
 
 </script>
 <script>
 (() => {
   const DIRECCION = "https://script.google.com/macros/s/AKfycbxSRWU7H3GYJGTxM7y1zY1OwjfMYUZvA-IjmLmyWoodvbArzvtc9yGPuL5rJ0LVe1R8/exec";  // la del script de la hoja (/exec), la misma a la que manda los pedidos el catálogo
-  const VERSION = 4;  // la del script que hace falta (catalogo/pedidos.py, VERSION_SCRIPT)
+  const VERSION = 5;  // la del script que hace falta (catalogo/pedidos.py, VERSION_SCRIPT)
   const ALMACEN = 'negoqr-pedidos-clave';
   const $ = (id) => document.getElementById(id);
 
