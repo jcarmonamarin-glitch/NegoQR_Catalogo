@@ -68,7 +68,12 @@ button:active:not(:disabled){ transform: translateY(1px); }
   padding: max(10px, env(safe-area-inset-top)) var(--borde-x) 10px; background: var(--bg);
   border-bottom: 1px solid var(--line); }
 .cabecera h1{ margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -.02em; line-height: 1.15; }
-.cabecera .estado{ display: block; font: 12px/1.4 var(--mono); color: var(--accent); white-space: nowrap; }
+.cabecera .estado{ display: flex; max-width: 100%; padding: 2px 0; border: 0; border-radius: 0; background: none;
+  font: 500 12px/1.4 var(--mono); color: var(--accent); text-align: left; }
+/* Lo que hace, en dos líneas como mucho («Sin conexión · copia de las 22:30» no cabe en una al lado de los botones) */
+.cabecera .estado #estado{ overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.cabecera .actividad-caja{ min-width: 0; }
+.cabecera .actividad-lista{ left: 0; right: auto; }
 .cab-acciones{ display: flex; align-items: center; gap: 8px; flex: none; }
 .cab-acciones .boton-enlace, .cab-acciones button{ min-height: 42px; padding: 0 14px; font-size: 14px; }
 .cab-acciones .boton-enlace{ color: var(--ink); background: rgba(255, 255, 255, .04); }
@@ -97,6 +102,23 @@ button:active:not(:disabled){ transform: translateY(1px); }
 /* Pedidos de la web (static/js/pedidos.js): resumen arriba y una tarjeta por pedido con su estado, su cobro y sus piezas;
    o, en «Por imprimir», una entrada por línea con piezas que faltan. La página del móvil (web/pedidos.html) lleva este
    mismo archivo dentro: lo de pantallas estrechas va al final */
+/* Lo que está haciendo la página con la hoja (pedidos.js, «Actividad»): el punto, verde y quieto si está al día,
+   ámbar latiendo mientras lee o guarda, rojo si algo ha fallado; al tocarlo, lo que ha hecho con su hora */
+.actividad-caja{ position: relative; }
+button.actividad{ display:inline-flex; align-items:center; gap: 7px; cursor: pointer; }
+.actividad-punto{ flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+.actividad.ocupada .actividad-punto{ background: #f5b14a; animation: latido .8s ease-in-out infinite alternate; }
+.actividad.con-error .actividad-punto{ background: #ff6b63; }
+@keyframes latido{ from{ opacity: 1; transform: scale(1); } to{ opacity: .3; transform: scale(.7); } }
+.actividad-lista{ position: absolute; z-index: 30; top: calc(100% + 6px); right: 0; width: min(400px, calc(100vw - 32px));
+  max-height: 50vh; overflow-y: auto; padding: 8px 12px; border: 1px solid var(--line-fuerte); border-radius: 12px;
+  background: #11191b; box-shadow: 0 14px 40px -12px rgba(0, 0, 0, .75); font: 12px/1.5 var(--mono); text-align: left; }
+.actividad-lista[hidden]{ display: none; }
+.actividad-lista p{ margin: 3px 0; color: var(--ink-dim); white-space: normal; }
+.actividad-lista .hora{ margin-right: 8px; color: var(--ink-faint); }
+.actividad-lista .error{ color: #ff8a84; }
+.actividad-lista .vacia{ color: var(--ink-faint); }
+
 .boton-enlace{ display:inline-flex; align-items:center; padding: 10px 16px; border-radius: 10px; border: 1px solid var(--line-fuerte);
   font-weight: 600; font-size: 13.5px; text-decoration: none; }
 .aviso-pedidos h2{ margin: 0 0 6px; font-size: 18px; }
@@ -362,9 +384,12 @@ button:active:not(:disabled){ transform: translateY(1px); }
 </head>
 <body>
 <header class="cabecera">
-  <div>
+  <div class="actividad-caja">
     <h1>Pedidos</h1>
-    <span class="estado" id="estado" role="status">Cargando…</span>
+    <button type="button" class="actividad estado" id="actividad" aria-expanded="false" aria-controls="actividadLista"
+      title="Lo que está haciendo la página con la hoja"><span class="actividad-punto" aria-hidden="true"></span><span
+      id="estado" role="status">Cargando…</span></button>
+    <div class="actividad-lista" id="actividadLista" role="log" hidden></div>
   </div>
   <div class="cab-acciones">
     <a class="boton-enlace" id="abrirHoja" href="#" target="_blank" rel="noopener" hidden>Hoja ↗</a>
@@ -1129,6 +1154,65 @@ const Pedidos = (() => {
       if (vieja && vieja.isConnected) vieja.replaceWith(tarjeta(p));
     }
 
+    // ---- Actividad: lo que está haciendo la página con la hoja, como la consola de la app pero sin panel lateral. El
+    // punto late mientras lee o guarda y se pone rojo si algo falla; al tocarlo, lo último que ha hecho, con su hora ----
+    const enCurso = new Map();  // lo que está haciendo ahora: id → texto
+    const registro = [];  // lo que ha hecho, lo último primero: {hora, texto, error}
+    const horaExacta = new Intl.DateTimeFormat('es-ES', { timeStyle: 'medium' });
+    const botonActividad = $('actividad'), listaActividad = $('actividadLista');
+    let reposo = 'Cargando…';  // lo que dice cuando no está haciendo nada
+    let errorSinVer = false;
+    const segundos = (desde) => `${((performance.now() - desde) / 1000).toFixed(1).replace('.', ',')} s`;
+
+    function empezar(id, texto) {
+      enCurso.set(id, texto);
+      pintarActividad();
+    }
+    function terminar(id, texto, error = false) {
+      enCurso.delete(id);
+      if (texto) anotar(texto, error);
+      pintarActividad();
+    }
+    function anotar(texto, error = false) {
+      registro.unshift({ hora: new Date(), texto, error });
+      registro.length = Math.min(registro.length, 40);
+      if (error && listaActividad.hidden) errorSinVer = true;
+      if (!listaActividad.hidden) pintarRegistro();
+    }
+    function pintarActividad() {
+      const haciendo = [...enCurso.values()];
+      botonActividad.classList.toggle('ocupada', haciendo.length > 0);
+      botonActividad.classList.toggle('con-error', errorSinVer && !haciendo.length);
+      $('estado').textContent = haciendo.length ? `${haciendo[0]}${haciendo.length > 1 ? ` (+${haciendo.length - 1})` : ''}` : reposo;
+      botonActividad.title = haciendo.length ? haciendo.join(' · ') : 'Lo que ha hecho la página con la hoja';
+    }
+    function pintarRegistro() {
+      listaActividad.replaceChildren(...(registro.length
+        ? registro.map((r) => el('p', r.error ? 'error' : '', el('span', 'hora', horaExacta.format(r.hora)), r.texto))
+        : [el('p', 'vacia', 'Aún no ha hecho nada.')]));
+    }
+    function abrirActividad(si) {
+      listaActividad.hidden = !si;
+      botonActividad.setAttribute('aria-expanded', String(si));
+      if (si) {
+        errorSinVer = false;
+        pintarRegistro();
+        pintarActividad();
+      }
+    }
+    botonActividad.addEventListener('click', () => abrirActividad(listaActividad.hidden));
+    document.addEventListener('click', (e) => { if (!listaActividad.hidden && !e.target.closest('.actividad-caja')) abrirActividad(false); });
+
+    // Lo que se ha guardado de un pedido, para el registro: «pagado, forma de pago Bizum»
+    function describir(c) {
+      return [
+        'estado' in c ? `estado «${c.estado}»` : '',
+        'pagado' in c ? (c.pagado ? 'pagado' : 'sin pagar') : '',
+        'forma' in c ? (c.forma ? `forma de pago ${c.forma}` : 'sin forma de pago') : '',
+        'piezas' in c ? `piezas: ${c.piezas.filter(Boolean).join(' / ')}` : '',
+      ].filter(Boolean).join(', ');
+    }
+
     // Lo que tiene la hoja de un pedido (`p.enHoja`: lo último que se leyó o se guardó). Se manda solo lo que cambia;
     // los cambios de cada pedido van de uno en uno (si llega otro mientras se guarda, después) y, si falla, el pedido
     // vuelve a lo que tiene la hoja
@@ -1142,6 +1226,7 @@ const Pedidos = (() => {
         g = { temporizador: 0, enVuelo: false, otraVez: false };
         guardando.set(p.numero, g);
         ocupada++;
+        empezar(`guardar${p.numero}`, `Guardando Nº ${p.numero}…`);
       }
       ponerNota(p.numero, 'Guardando en la hoja…');
       if (g.enVuelo) { g.otraVez = true; return; }
@@ -1155,9 +1240,14 @@ const Pedidos = (() => {
       for (const k of ['estado', 'pagado', 'forma']) if (ahora[k] !== antes[k]) cambios[k] = ahora[k];
       if (ahora.piezas.join('\n') !== antes.piezas.join('\n')) cambios.piezas = ahora.piezas;
       let fallo = null;
+      const desde = performance.now();
       try {
         if (Object.keys(cambios).length) await fuente.actualizar(p.numero, cambios);
         p.enHoja = ahora;
+        if (Object.keys(cambios).length) {
+          anotar(`Nº ${p.numero} guardado: ${describir(cambios)} (${segundos(desde)})`);
+          guardarCopia();
+        }
       } catch (e) {
         fallo = e;
       }
@@ -1170,10 +1260,15 @@ const Pedidos = (() => {
       guardando.delete(p.numero);
       ocupada--;
       if (!fallo) {
+        terminar(`guardar${p.numero}`);
         ponerNota(p.numero, '✓ Guardado');
         setTimeout(() => { if (notas.get(p.numero) === '✓ Guardado') ponerNota(p.numero, ''); }, 2000);
+        // Lo que se leyó mientras se guardaba no lo tenía: se vuelve a leer
+        if (releer && !guardando.size) cargar();
         return;
       }
+      terminar(`guardar${p.numero}`, `Nº ${p.numero}: no se pudo guardar (${fallo.message}). Vuelve a lo que tiene la hoja.`,
+        true);
       const h = p.enHoja;
       Object.assign(p, { estado: h.estado, pagado: h.pagado, forma: h.forma });
       piezas(h.piezas.join('\n'), p.lineas, h.estado).forEach((c, i) => { p.lineas[i].piezas = c; });
@@ -1183,47 +1278,79 @@ const Pedidos = (() => {
       pintarResumen();
       pintarCuentas();
       pintarLista();
+      if (releer && !guardando.size) cargar();
+    }
+
+    // Pinta lo que devuelve la hoja (o la copia guardada en este navegador)
+    function mostrar(j) {
+      // Lo que se sabe de cada producto por su código (pedidos.productos: la app lo saca del catálogo y el móvil lo
+      // lleva en la página): lo que tarda una pieza (0 = no se sabe) y su foto. Los pedidos de antes de los códigos
+      // lo buscan por el nombre
+      const fichas = { minutos: {}, fotos: {}, nombres: {}, ...j.productos };
+      const pedidos = (j.pedidos || []).map((p) => {
+        const lista = lineas(p.productos);
+        piezas(p.piezas, lista, p.estado).forEach((c, i) => {
+          const l = lista[i];
+          l.piezas = c;
+          l.ref = l.ref || fichas.nombres[normalizar(l.nombre).replace(/\s+/g, ' ').trim()] || '';
+          l.minutos = fichas.minutos[l.ref] || 0;
+          l.foto = fichas.fotos[l.ref] || '';
+        });
+        // Tal cual está en la hoja (vacío en los de antes): al primer cambio se escribe lo que se ve
+        const textos = String(p.piezas || '').split(/\r?\n/);
+        return { ...p, lineas: lista, enHoja: { estado: p.estado, pagado: p.pagado, forma: p.forma,
+          piezas: lista.map((_, i) => (textos[i] || '').trim()) } };
+      }).sort((a, b) => (b.numero || 0) - (a.numero || 0));  // el más nuevo primero
+      datos = { ...j, pedidos, resumen: resumen(pedidos) };
+      $('contenido').hidden = false;
+      if (j.hoja) { $('abrirHoja').href = j.hoja; $('abrirHoja').hidden = false; }
+      pintarResumen();
+      pintarCuentas();
+      pintarLista();
+    }
+
+    // La última lectura se guarda en este navegador: al abrir la página se enseña al momento (leer la hoja tarda de 2 a
+    // 10 s) y se pone al día en cuanto llega la hoja. En el móvil, «Olvidar la clave» la borra
+    const COPIA = 'negoqr-pedidos-copia';
+    let copiaDe = 0;  // cuándo se leyó lo que se ve, si es la copia
+    let releer = false;  // se leyó mientras se guardaba algo: hay que volver a leer cuando acabe
+
+    // La copia es lo que tiene la hoja: lo último leído con lo guardado después (así, al abrir, ya sale lo marcado)
+    function guardarCopia() {
+      const { resumen: _, pedidos: lista, ...resto } = datos;
+      const pedidos = lista.map(({ lineas: __, enHoja: h, ...p }) => ({ ...p, estado: h.estado, pagado: h.pagado,
+        forma: h.forma, piezas: h.piezas.join('\n') }));
+      try { localStorage.setItem(COPIA, JSON.stringify({ leida: leido || copiaDe, j: { ...resto, pedidos } })); } catch { /* sin almacén */ }
     }
 
     async function cargar() {
       if (ocupada) return;
       ocupada++;
-      $('estado').textContent = 'Leyendo la hoja…';
+      empezar('leer', 'Leyendo la hoja…');
       $('actualizar').disabled = true;
+      const desde = performance.now();
       try {
         const j = await fuente.leer();
-        // Lo que se sabe de cada producto por su código (pedidos.productos: la app lo saca del catálogo y el móvil lo
-        // lleva en la página): lo que tarda una pieza (0 = no se sabe) y su foto. Los pedidos de antes de los códigos
-        // lo buscan por el nombre
-        const fichas = { minutos: {}, fotos: {}, nombres: {}, ...j.productos };
-        const pedidos = (j.pedidos || []).map((p) => {
-          const lista = lineas(p.productos);
-          piezas(p.piezas, lista, p.estado).forEach((c, i) => {
-            const l = lista[i];
-            l.piezas = c;
-            l.ref = l.ref || fichas.nombres[normalizar(l.nombre).replace(/\s+/g, ' ').trim()] || '';
-            l.minutos = fichas.minutos[l.ref] || 0;
-            l.foto = fichas.fotos[l.ref] || '';
-          });
-          // Tal cual está en la hoja (vacío en los de antes): al primer cambio se escribe lo que se ve
-          const textos = String(p.piezas || '').split(/\r?\n/);
-          return { ...p, lineas: lista, enHoja: { estado: p.estado, pagado: p.pagado, forma: p.forma,
-            piezas: lista.map((_, i) => (textos[i] || '').trim()) } };
-        }).sort((a, b) => (b.numero || 0) - (a.numero || 0));  // el más nuevo primero
-        datos = { ...j, pedidos, resumen: resumen(pedidos) };
+        // Un cambio hecho mientras se leía no viene en lo leído: se lee otra vez cuando esté guardado
+        if (guardando.size) {
+          releer = true;
+          terminar('leer', `Leída la hoja (${segundos(desde)}), pero hay cambios guardándose: se vuelve a leer después`);
+          return;
+        }
+        releer = false;
+        mostrar(j);
         leido = Date.now();
+        copiaDe = 0;
         $('sinConexion').hidden = true;
-        $('contenido').hidden = false;
-        if (j.hoja) { $('abrirHoja').href = j.hoja; $('abrirHoja').hidden = false; }
-        pintarResumen();
-        pintarCuentas();
-        pintarLista();
-        $('estado').textContent = `${pedidos.length} pedidos · ${hora.format(new Date())}`;
+        guardarCopia();
+        reposo = `${datos.pedidos.length} pedidos · ${hora.format(new Date())}`;
+        terminar('leer', `Leída la hoja: ${datos.pedidos.length} pedidos (${segundos(desde)})`);
       } catch (e) {
         $('sinConexionMotivo').textContent = e.message;
         $('sinConexion').hidden = false;
         $('contenido').hidden = !datos;
-        $('estado').textContent = 'Sin conexión con la hoja';
+        reposo = copiaDe ? `Sin conexión · copia de las ${hora.format(new Date(copiaDe))}` : 'Sin conexión con la hoja';
+        terminar('leer', `No se pudo leer la hoja (${segundos(desde)}): ${e.message}`, true);
       } finally {
         ocupada--;
         $('actualizar').disabled = false;
@@ -1234,6 +1361,16 @@ const Pedidos = (() => {
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible' && datos && Date.now() - leido > 2 * 60 * 1000) cargar();
     });
+
+    try {
+      const copia = JSON.parse(localStorage.getItem(COPIA) || 'null');
+      if (copia && copia.j && Array.isArray(copia.j.pedidos)) {
+        mostrar(copia.j);
+        copiaDe = copia.leida;
+        reposo = `Copia de las ${hora.format(new Date(copiaDe))}`;
+        anotar(`Se enseña la copia de las ${hora.format(new Date(copiaDe))} (${datos.pedidos.length} pedidos) mientras se lee la hoja`);
+      }
+    } catch { /* sin almacén o copia rota: se espera a la hoja */ }
     cargar();
   }
 
@@ -1331,6 +1468,8 @@ const Pedidos = (() => {
       return;
     }
     guardarClave('');
+    // Y la copia de los pedidos (nombres y teléfonos) que guarda la página para enseñarlos al momento
+    try { localStorage.removeItem('negoqr-pedidos-copia'); } catch { /* sin almacén */ }
     location.reload();
   });
 
