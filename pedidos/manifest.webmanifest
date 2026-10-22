@@ -3,7 +3,7 @@
   "name": "Pedidos · Catálogo",
   "short_name": "Pedidos",
   "lang": "es",
-  "description": "Los pedidos del catálogo web: estado, cobro y forma de pago.",
+  "description": "Los pedidos del catálogo web: estado, cobro, forma de pago y lo que queda por imprimir.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

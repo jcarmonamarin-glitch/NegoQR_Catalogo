@@ -86,8 +86,9 @@ button:active:not(:disabled){ transform: translateY(1px); }
 .toast.show{ opacity: 1; transform: translateX(-50%) translateY(0); }
 
 /* static/css/pedidos.css, igual que en la app */
-/* Pedidos de la web (static/js/pedidos.js): resumen arriba y una tarjeta por pedido con su estado y su cobro.
-   La página del móvil (web/pedidos.html) lleva este mismo archivo dentro: lo de pantallas estrechas va al final */
+/* Pedidos de la web (static/js/pedidos.js): resumen arriba y una tarjeta por pedido con su estado, su cobro y sus piezas;
+   o, en «Por imprimir», una entrada por línea con piezas que faltan. La página del móvil (web/pedidos.html) lleva este
+   mismo archivo dentro: lo de pantallas estrechas va al final */
 .boton-enlace{ display:inline-flex; align-items:center; padding: 10px 16px; border-radius: 10px; border: 1px solid var(--line-fuerte);
   font-weight: 600; font-size: 13.5px; text-decoration: none; }
 .aviso-pedidos h2{ margin: 0 0 6px; font-size: 18px; }
@@ -145,12 +146,33 @@ button:active:not(:disabled){ transform: translateY(1px); }
 .pedido-cab .tel{ margin-left: auto; }
 .pedido ul{ margin: 8px 0 0; padding-left: 18px; font-size: 13.5px; }
 .pedido li{ margin: 2px 0; }
-.pedido .detalle{ display:block; color: var(--accent); font-size: 12.5px; }
+.pedido .detalle, .cola-item .detalle{ display:block; color: var(--accent); font-size: 12.5px; }
 /* El código del producto (P-037) y, si es enlace, a su modelo en Printables o a su ficha */
-.pedido .ref{ display:flex; width: fit-content; margin: 3px 0 4px; padding: 2px 9px; border-radius: 999px;
+.pedido .ref, .cola-item .ref{ display:flex; width: fit-content; margin: 3px 0 4px; padding: 2px 9px; border-radius: 999px;
   border: 1px solid var(--line-fuerte); font: 600 12px/1.5 var(--mono); color: var(--ink-dim); text-decoration: none; }
-.pedido a.ref{ color: #7fb4ff; border-color: rgba(127, 180, 255, .45); background: rgba(127, 180, 255, .08); }
-.pedido a.ref:hover{ background: rgba(127, 180, 255, .16); }
+.pedido a.ref, .cola-item a.ref{ color: #7fb4ff; border-color: rgba(127, 180, 255, .45); background: rgba(127, 180, 255, .08); }
+.pedido a.ref:hover, .cola-item a.ref:hover{ background: rgba(127, 180, 255, .16); }
+/* Lo que tarda cada pieza y cuándo acabaría (tiempoLinea); en la cabecera del pedido, lo que le falta */
+.tiempo{ display:block; margin: 2px 0; font-size: 12.5px; color: var(--ink-dim); }
+.tiempo.sin{ color: var(--ink-faint); }
+.tiempo .fin, .plan-texto .fin{ color: var(--ink); font-weight: 600; }
+.pedido-cab .falta{ font-size: 13px; font-weight: 600; }
+/* Las piezas de una línea: con una, Pendiente / Impreso / Entregado; con varias, cuántas impresas y entregadas */
+.piezas{ display:flex; flex-wrap:wrap; gap: 6px 16px; margin: 5px 0 9px; }
+.piezas.una{ gap: 0; width: fit-content; border: 1px solid var(--line-fuerte); border-radius: 10px; overflow: hidden; }
+.piezas.una button{ padding: 5px 12px; border: 0; border-radius: 0; background: transparent; color: var(--ink-dim);
+  font-size: 12.5px; font-weight: 600; }
+.piezas.una button + button{ border-left: 1px solid var(--line-fuerte); }
+.piezas.una button.e0{ background: rgba(255, 255, 255, .1); color: var(--ink); }
+.piezas.una button.e1{ background: rgba(127, 180, 255, .18); color: #a9cdff; }
+.piezas.una button.e2{ background: rgba(61, 220, 151, .18); color: var(--accent); }
+.contador{ display:flex; align-items:center; gap: 6px; font-size: 12.5px; }
+.contador .que{ min-width: 70px; color: var(--ink-dim); }
+.contador button{ width: 30px; height: 30px; padding: 0; border-radius: 8px; border: 1px solid var(--line-fuerte);
+  background: rgba(255, 255, 255, .04); color: var(--ink); font-size: 17px; line-height: 1; }
+.contador button:disabled{ opacity: .3; cursor: default; }
+.contador .cuantas{ min-width: 52px; text-align: center; font-weight: 600; font-variant-numeric: tabular-nums; }
+.contador.completo .cuantas{ color: var(--accent); }
 .pedido .comentario{ margin: 6px 0 0; font-size: 13px; color: var(--ink-dim); white-space: pre-line; }
 .pedido-acciones{ display:flex; flex-wrap:wrap; align-items:center; gap: 8px 16px; margin-top: 10px; padding-top: 10px;
   border-top: 1px solid var(--line); }
@@ -166,6 +188,31 @@ button:active:not(:disabled){ transform: translateY(1px); }
   color: var(--accent); font-size: 13px; font-weight: 600; }
 .pregunta-forma button.cancelar{ border-color: var(--line-fuerte); color: var(--ink-dim); }
 
+/* «Por imprimir»: cuántas horas hay y lo que cabe (plan-dia), y una entrada por línea con piezas que faltan */
+.plan-dia{ display:flex; flex-wrap:wrap; align-items:center; gap: 8px 16px; margin-bottom: 12px; padding: 10px 12px;
+  border: 1px solid var(--line); border-radius: 12px; background: rgba(255, 255, 255, .02); }
+.plan-dia[hidden]{ display: none; }
+.plan-horas{ display:flex; align-items:center; gap: 8px; margin: 0; font-size: 14px; font-weight: 600; white-space: nowrap; }
+.plan-horas input{ width: 76px; }
+.plan-horas .num-paso{ width: 148px; }
+.plan-texto{ flex: 1; min-width: 220px; margin: 0; font-size: 13px; color: var(--ink-dim); }
+.cola-item{ padding: 10px 14px; border: 1px solid var(--line); border-left: 4px solid var(--line-fuerte); border-radius: 12px;
+  background: rgba(255, 255, 255, .02); font-size: 13.5px; }
+.cola-item.hecho{ border-left-color: var(--accent); opacity: .65; }
+.cola-item.no-cabe{ opacity: .6; }
+.cola-cab{ display:flex; flex-wrap:wrap; align-items:center; gap: 4px 10px; }
+.ir-pedido{ padding: 0; border: 0; background: none; color: var(--ink-dim); font-size: 12.5px; font-weight: 600; text-align: left; }
+.ir-pedido:hover{ color: var(--accent); }
+.sin-confirmar{ font-size: 12px; color: #f5b14a; }
+.marca{ margin-left: auto; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--line-fuerte); font-size: 12px;
+  color: var(--ink-dim); white-space: nowrap; }
+.marca.cabe, .marca.hecha{ color: var(--accent); border-color: rgba(61, 220, 151, .45); }
+.marca.no{ color: var(--ink-faint); }
+.marca.sin{ color: #f5b14a; border-color: rgba(245, 177, 74, .45); }
+.cola-que{ margin-top: 4px; font-size: 14.5px; font-weight: 650; }
+.cola-que .faltan{ color: #f5b14a; font-weight: 600; }
+.cola-item .guardando{ font-size: 12px; color: var(--ink-faint); }
+
 /* «📱 En el móvil» (static/js/pedidos-app.js): el QR con el enlace y la clave */
 .qr-movil{ width: 210px; margin: 0 auto 12px; border-radius: 12px; overflow: hidden; background: #fff; }
 .qr-movil svg{ display:block; width: 100%; height: auto; }
@@ -180,7 +227,7 @@ button:active:not(:disabled){ transform: translateY(1px); }
   .cifra{ padding: 10px 12px; border-radius: 12px; }
   .cifra .num{ font-size: 19px; }
   .cifra .que{ font-size: 12px; }
-  .cifra.lista{ grid-column: 1 / -1; }
+  .cifra.lista, .cifra.ancha{ grid-column: 1 / -1; }
   .cifra.lista summary{ min-height: 26px; font-size: 13px; }
   .cifra.lista ol{ font-size: 14px; }
 
@@ -199,8 +246,28 @@ button:active:not(:disabled){ transform: translateY(1px); }
   .pedido-cab .tel::before{ content: "💬 "; }
   .pedido ul{ font-size: 14.5px; }
   .pedido .detalle{ font-size: 13.5px; }
-  .pedido .ref{ margin: 5px 0 6px; padding: 7px 12px; font-size: 13.5px; }  /* para acertar con el dedo */
+  .pedido .ref, .cola-item .ref{ margin: 5px 0 6px; padding: 7px 12px; font-size: 13.5px; }  /* para acertar con el dedo */
   .pedido .comentario{ font-size: 14px; }
+  .tiempo{ font-size: 13.5px; }
+  /* Las piezas, de 44 px: los tres estados ocupan la fila; los contadores, uno debajo de otro */
+  .piezas.una{ width: 100%; }
+  .piezas.una button{ flex: 1; min-height: 44px; padding: 0 4px; font-size: 14.5px; }
+  .piezas.varias{ flex-direction: column; gap: 8px; }
+  .contador{ gap: 10px; font-size: 14.5px; }
+  .contador .que{ min-width: 92px; }
+  .contador button{ width: 44px; height: 44px; font-size: 21px; }
+  .contador .cuantas{ min-width: 62px; }
+
+  .plan-dia{ flex-direction: column; align-items: stretch; }
+  .plan-horas{ font-size: 15px; }
+  .plan-horas input{ width: 96px; min-height: 44px; font-size: 16px; }
+  .plan-texto{ min-width: 0; font-size: 14px; }
+  .cola-item{ padding: 10px 12px; }
+  .ir-pedido{ min-height: 32px; font-size: 14px; }
+  .marca, .sin-confirmar{ font-size: 13px; }
+  .cola-que{ font-size: 15.5px; }
+  .cola-item .detalle{ font-size: 13.5px; }
+  .cola-item .guardando{ font-size: 13px; }
 
   .pedido-acciones{ display:grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px;
     grid-template-areas: "estado forma" "pagado pagado" "pregunta pregunta" "nota nota"; }
@@ -253,6 +320,7 @@ button:active:not(:disabled){ transform: translateY(1px); }
         <input type="search" id="buscar" placeholder="Buscar cliente, producto o color" enterkeyhint="search">
         <div class="filtros" role="group" aria-label="Filtrar">
           <button type="button" class="activo" data-filtro="pendientes">Pendientes</button>
+          <button type="button" data-filtro="imprimir">Por imprimir</button>
           <button type="button" data-filtro="entregados">Entregados</button>
           <button type="button" data-filtro="cobrar">Por cobrar</button>
           <button type="button" data-filtro="cancelados">Cancelados</button>
@@ -277,9 +345,10 @@ button:active:not(:disabled){ transform: translateY(1px); }
 // Pedidos de la web. La página «Pedidos» de la app y la del móvil (web/pedidos.html, que se publica con el catálogo)
 // son esta misma: solo cambia de dónde salen los pedidos (`fuente`). La app los pide a su servidor (pedidos-app.js) y
 // el móvil, directamente al script de la hoja de Google. Aquí se leen las líneas de cada pedido, se hace el resumen y
-// se pinta todo; cada cambio de estado, cobro o forma de pago va al momento a la hoja. Los pedidos van por pestañas
-// (`seccion`: «Pendientes», «Entregados» —entregados y pagados— y «Cancelados»), cada uno plegado en una línea.
-//   Pedidos.iniciar({ leer: async () => ({ pedidos, hoja, estados, formas }), actualizar: async (numero, cambios) => {} })
+// se pinta todo; cada cambio de estado, cobro, forma de pago o de las piezas se ve al momento y va a la hoja. Los
+// pedidos van por pestañas (`seccion`: «Pendientes», «Entregados» —entregados y pagados— y «Cancelados»), cada uno
+// plegado en una línea; «Por imprimir» es otra cosa: las piezas que faltan de todos los pedidos (`cola`).
+//   Pedidos.iniciar({ leer: async () => ({ pedidos, hoja, estados, formas, tiempos }), actualizar: async (numero, cambios) => {} })
 const Pedidos = (() => {
   // «2 × P-037 Chapa para mascota (2,50 €) — Chapa: Negro · Borde y letras: Amarillo · Nombre: «Milo»». El código
   // (P-037) lo apunta el script desde su versión 5: los pedidos de antes no lo llevan
@@ -300,6 +369,94 @@ const Pedidos = (() => {
     return resultado;
   }
 
+  // ---- Las piezas de cada línea (3 × Chapa son tres, cada una por su lado): [pendientes, impresas, entregadas] ----
+  const ESTADOS_PIEZA = ['Pendiente', 'Impreso', 'Entregado'];
+  const PARTE = /^(Pendiente|Impreso|Entregado)(?: ×(\d+))?$/;
+  const piezasDeLinea = (c) => c[0] + c[1] + c[2];
+
+  // Las de cada línea, de la columna «Estado de los productos» (una línea de texto por línea del pedido: «Impreso» o
+  // «Pendiente ×1 · Impreso ×2»). Lo que falte o no se entienda sale del estado del pedido: así salen los de antes
+  function piezas(texto, lineasPedido, estado) {
+    const textos = String(texto || '').split(/\r?\n/);
+    return lineasPedido.map((l, i) => {
+      const n = Math.max(1, l.cantidad || 0);
+      const segun = estado === 'Entregado' ? [0, 0, n] : estado === 'Hecho' ? [0, n, 0] : [n, 0, 0];
+      const partes = (textos[i] || '').trim().split(' · ').map((t) => t.trim().match(PARTE));
+      if (partes.some((m) => !m)) return segun;
+      const c = [0, 0, 0];
+      if (partes.length === 1 && !partes[0][2]) c[ESTADOS_PIEZA.indexOf(partes[0][1])] = n;
+      else partes.forEach((m) => { c[ESTADOS_PIEZA.indexOf(m[1])] += Number(m[2] || 1); });
+      // Si no suman lo que pide la línea (alguien ha tocado la hoja a mano): sobran pendientes, o faltan
+      let sobra = piezasDeLinea(c) - n;
+      for (let j = 0; sobra > 0 && j < 3; j++) {
+        const quita = Math.min(c[j], sobra);
+        c[j] -= quita;
+        sobra -= quita;
+      }
+      if (sobra < 0) c[0] -= sobra;
+      return c;
+    });
+  }
+
+  // Lo que se escribe en la hoja de una línea: «Impreso» si todas están igual; si no, «Pendiente ×1 · Impreso ×2»
+  function textoPiezas(c) {
+    const hay = ESTADOS_PIEZA.map((e, i) => [e, c[i]]).filter(([, k]) => k > 0);
+    return hay.length === 1 ? hay[0][0] : hay.map(([e, k]) => `${e} ×${k}`).join(' · ');
+  }
+
+  // El estado del pedido según sus piezas: todas entregadas, «Entregado»; todas impresas, «Hecho»; y si vuelve a faltar
+  // alguna, el que tenía antes de cambiar solo (`antes`; si no se sabe, «Confirmado»). Un cancelado no cambia
+  const AUTOMATICOS = ['Hecho', 'Entregado'];
+  function estadoSegunPiezas(estado, lista, antes) {
+    if (estado === 'Cancelado' || !lista.length) return estado;
+    const [pendientes, impresas] = lista.reduce((t, c) => t.map((v, i) => v + c[i]), [0, 0, 0]);
+    if (!pendientes && !impresas) return 'Entregado';
+    if (!pendientes) return 'Hecho';
+    if (AUTOMATICOS.includes(estado)) return antes && !AUTOMATICOS.includes(antes) ? antes : 'Confirmado';
+    return estado;
+  }
+
+  // Al poner a mano el estado del pedido: «Hecho» da por impresas las que faltaban y «Entregado», todas entregadas
+  function piezasSegunEstado(estado, lista) {
+    return lista.map(([a, b, c]) => (estado === 'Entregado' ? [0, 0, a + b + c] : estado === 'Hecho' ? [0, a + b, c] : [a, b, c]));
+  }
+
+  function duracion(minutos) {
+    const m = Math.round(minutos), h = Math.floor(m / 60), r = m % 60;
+    return h ? (r ? `${h} h ${r} min` : `${h} h`) : `${r} min`;
+  }
+
+  // Lo que queda por imprimir, del pedido más antiguo al más nuevo: una entrada por línea con piezas pendientes
+  // (`tambien`: «número:línea» de las que se acaban de imprimir, para que no desaparezcan de golpe). Con `disponible`
+  // (minutos), cuántas caben de cada una cogiéndolas en ese orden y saltando las que ya no caben, y `fin`, los minutos
+  // hasta que acabarían contando las de antes; sin él, `fin` es lo que tardan las suyas
+  function cola(pedidos, disponible = null, tambien = new Set()) {
+    const entradas = [];
+    for (const p of [...pedidos].sort((x, y) => (x.numero || 0) - (y.numero || 0))) {
+      if (p.estado === 'Cancelado') continue;
+      p.lineas.forEach((l, i) => {
+        if (l.piezas && (l.piezas[0] > 0 || tambien.has(`${p.numero}:${i}`))) {
+          entradas.push({ pedido: p, linea: l, indice: i, faltan: l.piezas[0], minutos: l.minutos || 0 });
+        }
+      });
+    }
+    let queda = disponible, usado = 0;
+    for (const e of entradas) {
+      if (disponible === null || !e.minutos) {
+        e.caben = null;
+        e.fin = e.minutos * e.faltan;
+        continue;
+      }
+      e.caben = Math.min(e.faltan, Math.floor(queda / e.minutos));
+      queda -= e.caben * e.minutos;
+      usado += e.caben * e.minutos;
+      e.fin = e.caben ? usado : null;
+    }
+    const suma = (f) => entradas.reduce((t, e) => t + f(e), 0);
+    return { entradas, piezas: suma((e) => e.faltan), minutos: suma((e) => e.faltan * e.minutos),
+      sin_tiempo: suma((e) => (e.minutos ? 0 : e.faltan)), caben: suma((e) => e.caben || 0), usado };
+  }
+
   // En qué pestaña va un pedido: cancelado; entregado y pagado, que ya no tiene nada que hacer («Entregados»); o
   // pendiente (lo demás: por hacer, hecho sin entregar, pagado por adelantado, entregado sin cobrar…)
   function seccion(p) {
@@ -307,7 +464,8 @@ const Pedidos = (() => {
     return p.pagado && p.estado === 'Entregado' ? 'entregados' : 'pendientes';
   }
 
-  // Cobrado, pendiente de cobro (sin cancelados), lo más pedido y los colores que más se piden (para comprar rollos)
+  // Cobrado, pendiente de cobro (sin cancelados), lo que queda por imprimir, lo más pedido y los colores que más se
+  // piden (para comprar rollos)
   function resumen(pedidos) {
     const vivos = pedidos.filter((p) => p.estado !== 'Cancelado');
     const productos = new Map(), colores = new Map();
@@ -324,10 +482,12 @@ const Pedidos = (() => {
     }
     const suma = (lista) => Math.round(lista.reduce((t, p) => t + p.total, 0) * 100) / 100;
     const deMasAMenos = (mapa) => [...mapa].sort((a, b) => b[1] - a[1]).slice(0, 10);  // empates: por orden de llegada
+    const c = cola(pedidos);
     return {
       pedidos: pedidos.length, cancelados: pedidos.length - vivos.length, importe: suma(vivos),
       cobrado: suma(pedidos.filter((p) => p.pagado)), pendiente: suma(vivos.filter((p) => !p.pagado)),
       entregado_sin_cobrar: suma(vivos.filter((p) => p.estado === 'Entregado' && !p.pagado)),
+      por_imprimir: { piezas: c.piezas, minutos: c.minutos, sin_tiempo: c.sin_tiempo },
       mas_pedidos: deMasAMenos(productos), colores: deMasAMenos(colores),
     };
   }
@@ -339,12 +499,20 @@ const Pedidos = (() => {
     return e;
   }
 
+  function boton(texto, alPulsar, clase = '', desactivado = false) {
+    const b = el('button', clase, texto);
+    b.type = 'button';
+    b.disabled = desactivado;
+    b.addEventListener('click', alPulsar);
+    return b;
+  }
+
   function aviso(texto) {
     const t = document.getElementById('toast');
     t.textContent = texto;
     t.classList.add('show');
     clearTimeout(aviso.h);
-    aviso.h = setTimeout(() => t.classList.remove('show'), 2600);
+    aviso.h = setTimeout(() => t.classList.remove('show'), 3200);
   }
 
   function iniciar(fuente) {
@@ -352,18 +520,46 @@ const Pedidos = (() => {
     const euros = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' });
     const fecha = new Intl.DateTimeFormat('es-ES', { dateStyle: 'medium', timeStyle: 'short' });
     const hora = new Intl.DateTimeFormat('es-ES', { timeStyle: 'short' });
+    const diaSemana = new Intl.DateTimeFormat('es-ES', { weekday: 'long' });
     const normalizar = (t) => String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
     // En el móvil las listas del resumen empiezan plegadas: lo primero que se quiere ver son los pedidos
     const estrecha = matchMedia('(max-width: 600px)').matches;
     const plegadas = {};
+    const ESPERA_PIEZAS = 900;  // ms: las piezas se guardan al rato, por si se tocan varias seguidas
 
-    let datos = null;  // {pedidos, resumen, hoja, estados, formas}
+    let datos = null;  // {pedidos, resumen, hoja, estados, formas, tiempos}
     let filtro = 'pendientes';
     const abiertos = new Set();  // los pedidos desplegados (por su número): siguen así al volver a pintar la lista
+    const tarjetas = new Map();  // número → su tarjeta en la lista (se cambia entera al cambiar el pedido)
+    const recien = new Set();  // «número:línea» impresas desde «Por imprimir»: siguen a la vista hasta cambiar de pestaña
+    const notas = new Map();  // número → «Guardando en la hoja…» / «✓ Guardado»
     let leido = 0;  // cuándo se leyó la hoja por última vez
     let ocupada = 0;  // lecturas y cambios en marcha
 
-    // ---- Resumen: lo que falta por cobrar y lo que más se pide (también los colores, para comprar rollos) ----
+    // Lo que tarda una pieza de una línea, en minutos: por su código o, en los pedidos de antes de los códigos, por su
+    // nombre (pedidos.tiempos: la app lo saca del catálogo y el móvil lo lleva en la página). 0 = no se sabe
+    function minutosDe(l, tiempos) {
+      const ref = l.ref || (tiempos.nombres || {})[normalizar(l.nombre).replace(/\s+/g, ' ').trim()];
+      return (tiempos.codigos || {})[ref] || 0;
+    }
+
+    // «a las 18:40», «mañana a las 01:10» o «el jueves a las 10:00»: cuándo acabaría lo que se empieza ahora. Se pone
+    // al día cada minuto (la página puede quedarse abierta)
+    function textoFin(minutos) {
+      const fin = new Date(Date.now() + minutos * 60000);
+      const dias = Math.round((new Date(fin).setHours(0, 0, 0, 0) - new Date().setHours(0, 0, 0, 0)) / 86400000);
+      const a = `a las ${hora.format(fin)}`;
+      return dias === 0 ? a : dias === 1 ? `mañana ${a}` : `el ${diaSemana.format(fin)} ${a}`;
+    }
+    function fin(minutos) {
+      const s = el('span', 'fin', textoFin(minutos));
+      s.dataset.min = String(minutos);
+      return s;
+    }
+    setInterval(() => document.querySelectorAll('.fin').forEach((s) => { s.textContent = textoFin(Number(s.dataset.min)); }),
+      60000);
+
+    // ---- Resumen: lo que falta por imprimir y por cobrar y lo que más se pide (también los colores, para los rollos) ----
     function pintarResumen() {
       const r = datos.resumen;
       const cifra = (num, que, clase = '') => el('div', `cifra ${clase}`, el('div', 'num', num), el('div', 'que', que));
@@ -375,7 +571,10 @@ const Pedidos = (() => {
         d.addEventListener('toggle', () => { plegadas[titulo] = !d.open; });
         return d;
       };
+      const imprimir = r.por_imprimir;
       $('resumen').replaceChildren(
+        cifra(imprimir.piezas ? duracion(imprimir.minutos) : '—', `Por imprimir (${piezasTexto(imprimir.piezas)}`
+          + `${imprimir.sin_tiempo ? `, ${imprimir.sin_tiempo} sin tiempo` : ''})`, 'ancha'),
         cifra(euros.format(r.pendiente), 'Pendiente de cobro', r.pendiente > 0 ? 'aviso' : ''),
         cifra(euros.format(r.entregado_sin_cobrar), 'Entregado y sin cobrar', r.entregado_sin_cobrar > 0 ? 'aviso' : ''),
         cifra(euros.format(r.cobrado), 'Cobrado', 'bien'),
@@ -384,8 +583,9 @@ const Pedidos = (() => {
         lista('Colores más pedidos', r.colores),
       );
     }
+    const piezasTexto = (n) => `${n} ${n === 1 ? 'pieza' : 'piezas'}`;
 
-    // ---- Lista: una pestaña por sección (seccion) y dos más, «Por cobrar» y «Todos» ----
+    // ---- Lista: una pestaña por sección (seccion), «Por imprimir» (cola), «Por cobrar» y «Todos» ----
     const FILTROS = {
       pendientes: (p) => seccion(p) === 'pendientes',
       entregados: (p) => seccion(p) === 'entregados',
@@ -394,19 +594,38 @@ const Pedidos = (() => {
       todos: () => true,
     };
     const NOMBRE_SECCION = { pendientes: 'Pendientes', entregados: 'Entregados', cancelados: 'Cancelados' };
-    document.querySelectorAll('[data-filtro]').forEach((b) => b.addEventListener('click', () => {
-      filtro = b.dataset.filtro;
-      document.querySelectorAll('[data-filtro]').forEach((x) => x.classList.toggle('activo', x === b));
+    function ponerFiltro(f) {
+      filtro = f;
+      recien.clear();
+      document.querySelectorAll('[data-filtro]').forEach((x) => x.classList.toggle('activo', x.dataset.filtro === f));
+      plan.hidden = f !== 'imprimir';
       pintarLista();
-    }));
+    }
+    document.querySelectorAll('[data-filtro]').forEach((b) => b.addEventListener('click', () => ponerFiltro(b.dataset.filtro)));
     $('buscar').addEventListener('input', () => pintarLista());
 
-    // Cuántos hay en cada filtro, en su botón
+    // «Tengo 6 h para imprimir»: en «Por imprimir» marca lo que cabe (se recuerda en este navegador)
+    const HORAS = 'negoqr-pedidos-horas';
+    const horas = el('input');
+    Object.assign(horas, { type: 'number', min: '0', max: '200', step: '0.5', inputMode: 'decimal', placeholder: '—' });
+    horas.setAttribute('aria-label', 'Horas que tienes para imprimir');
+    try { horas.value = localStorage.getItem(HORAS) || ''; } catch { /* sin almacén */ }
+    horas.addEventListener('input', () => {
+      try { localStorage.setItem(HORAS, horas.value); } catch { /* sin almacén */ }
+      if (datos) pintarLista();
+    });
+    const planTexto = el('p', 'plan-texto');
+    const plan = el('div', 'plan-dia', el('label', 'plan-horas', 'Tengo', horas, 'h para imprimir'), planTexto);
+    plan.hidden = true;
+    $('lista').before(plan);
+
+    // Cuántos hay en cada filtro, en su botón (en «Por imprimir», las piezas)
     function pintarCuentas() {
       document.querySelectorAll('[data-filtro]').forEach((b) => {
         let cuenta = b.querySelector('.cuenta');
         if (!cuenta) b.append(cuenta = el('span', 'cuenta'));
-        cuenta.textContent = String(datos.pedidos.filter(FILTROS[b.dataset.filtro]).length);
+        cuenta.textContent = String(b.dataset.filtro === 'imprimir' ? datos.resumen.por_imprimir.piezas
+          : datos.pedidos.filter(FILTROS[b.dataset.filtro]).length);
       });
     }
 
@@ -430,15 +649,85 @@ const Pedidos = (() => {
     const VACIO = {
       pendientes: 'No hay pedidos pendientes.', entregados: 'Aún no hay pedidos entregados y pagados.',
       cobrar: 'No hay nada por cobrar.', cancelados: 'No hay pedidos cancelados.', todos: 'No hay pedidos.',
+      imprimir: 'No queda nada por imprimir.',
     };
 
     function pintarLista() {
+      tarjetas.clear();
+      if (filtro === 'imprimir') { pintarCola(); return; }
       const busca = normalizar($('buscar').value.trim());
       const pedidos = datos.pedidos.filter(FILTROS[filtro]).filter((p) => !busca || normalizar(
         `${p.numero} ${p.nombre} ${p.apellidos} ${p.telefono} ${p.productos} ${p.comentario}`).includes(busca));
       $('lista').replaceChildren(...(pedidos.length ? pedidos.map(tarjeta)
         : [el('p', 'vacio', !datos.pedidos.length ? 'Aún no ha llegado ningún pedido desde la web.'
           : busca ? 'Ningún pedido coincide.' : VACIO[filtro])]));
+    }
+
+    // Lo que tarda una línea: cada pieza y, si faltan, cuándo acabarían si se empiezan ya. Con `plan` (en «Por
+    // imprimir» con horas), cuántas caben y cuándo acabarían después de las de antes
+    function tiempoLinea(l, plan = null) {
+      if (!l.minutos) {
+        const s = el('span', 'tiempo sin', '⏱ Sin tiempo de impresión');
+        s.title = 'Este producto no tiene tiempo: se saca al laminarlo en Productos';
+        return s;
+      }
+      const n = piezasDeLinea(l.piezas), faltan = l.piezas[0];
+      const s = el('span', 'tiempo', `⏱ ${duracion(l.minutos)}${n > 1 ? ' cada pieza' : ''}`);
+      if (!faltan) return s;
+      if (plan) {
+        if (plan.caben) {
+          s.append(` · ${plan.caben > 1 ? `las ${plan.caben}: ${duracion(plan.caben * l.minutos)}; ` : ''}con lo de arriba, acabas `,
+            fin(plan.fin));
+        } else if (faltan > 1) {
+          s.append(` · las ${faltan}: ${duracion(faltan * l.minutos)}`);
+        }
+      } else if (n === 1) {
+        s.append(' · si empiezas ya, acaba ', fin(l.minutos));
+      } else {
+        s.append(` · ${faltan === n ? `las ${n}` : `las ${faltan} que faltan`}: ${duracion(faltan * l.minutos)}, acaban `,
+          fin(faltan * l.minutos));
+      }
+      return s;
+    }
+
+    // Lo que se ha hecho de una línea: con una pieza, Pendiente / Impreso / Entregado; con varias, cuántas están
+    // impresas y cuántas entregadas («2 de 3»), cada una por su lado
+    function controlPiezas(p, l) {
+      const n = piezasDeLinea(l.piezas);
+      const cambiar = (nuevas) => cambiarPiezas(p, l, nuevas);
+      if (n === 1) {
+        const actual = l.piezas.findIndex((k) => k > 0);
+        const grupo = el('div', 'piezas una', ...ESTADOS_PIEZA.map((e, i) => {
+          const b = boton(e, () => { if (i !== actual) cambiar([0, 1, 2].map((j) => (j === i ? 1 : 0))); },
+            i === actual ? `activo e${i}` : '');
+          b.setAttribute('aria-pressed', String(i === actual));
+          return b;
+        }));
+        grupo.setAttribute('role', 'group');
+        grupo.setAttribute('aria-label', `Estado de ${l.nombre}`);
+        return grupo;
+      }
+      const [a, b, c] = l.piezas;
+      const contador = (que, cuantas, menos, mas) => {
+        const caja = el('div', `contador${cuantas === n ? ' completo' : ''}`, el('span', 'que', que),
+          boton('−', menos, 'menos', !cuantas), el('span', 'cuantas', `${cuantas} de ${n}`), boton('+', mas, 'mas', cuantas === n));
+        caja.querySelector('.menos').setAttribute('aria-label', `${que}: una menos`);
+        caja.querySelector('.mas').setAttribute('aria-label', `${que}: una más`);
+        return caja;
+      };
+      return el('div', 'piezas varias',
+        contador('Impresas', b + c, () => cambiar(b ? [a + 1, b - 1, c] : [a + 1, b, c - 1]), () => cambiar([a - 1, b + 1, c])),
+        contador('Entregadas', c, () => cambiar([a, b + 1, c - 1]), () => cambiar(b ? [a, b - 1, c + 1] : [a - 1, b, c + 1])));
+    }
+
+    function nota(numero) {
+      const s = el('span', 'guardando', notas.get(numero) || '');
+      s.dataset.nota = String(numero);
+      return s;
+    }
+    function ponerNota(numero, texto) {
+      if (texto) notas.set(numero, texto); else notas.delete(numero);
+      document.querySelectorAll(`[data-nota="${numero}"]`).forEach((s) => { s.textContent = texto; });
     }
 
     // Cada pedido, plegado en una línea (número, cliente y estado): al tocarla se despliega con todo lo demás
@@ -449,10 +738,14 @@ const Pedidos = (() => {
       tel.rel = 'noopener';
       tel.title = 'Escribirle por WhatsApp';
       const cuando = p.fecha && !Number.isNaN(Date.parse(p.fecha)) ? fecha.format(new Date(p.fecha)) : p.fecha;
+      const vivo = p.estado !== 'Cancelado';
       const lineasPedido = el('ul', '', ...p.lineas.map((l) => el('li', '',
         l.cantidad ? `${l.cantidad} × ${l.nombre} (${euros.format(l.precio)})` : l.nombre,
         l.detalle ? el('span', 'detalle', l.detalle) : null,
-        l.ref ? referencia(l.ref, (p.enlaces || {})[l.ref]) : null)));
+        l.ref ? referencia(l.ref, (p.enlaces || {})[l.ref]) : null,
+        vivo ? tiempoLinea(l) : null,
+        vivo ? controlPiezas(p, l) : null)));
+      const falta = vivo ? p.lineas.reduce((t, l) => t + l.piezas[0] * (l.minutos || 0), 0) : 0;
 
       const estado = el('select');
       datos.estados.forEach((e) => estado.append(new Option(e, e, false, e === p.estado)));
@@ -463,33 +756,26 @@ const Pedidos = (() => {
       const forma = el('select');
       forma.append(new Option('—', ''));
       datos.formas.forEach((f) => forma.append(new Option(f, f, false, f === p.forma)));
-      const nota = el('span', 'guardando');
       // Al marcarlo pagado sin forma de pago, se pregunta antes cómo ha pagado: si así queda entregado y pagado, se va
       // a «Entregados» y luego habría que ir a buscarlo para ponérsela
-      const boton = (texto, alPulsar, clase = '') => {
-        const b = el('button', clase, texto);
-        b.type = 'button';
-        b.addEventListener('click', alPulsar);
-        return b;
-      };
       const pagarCon = (f) => () => {
         preguntaForma.hidden = true;
-        const antes = p.forma;
-        forma.value = f;
-        cambiar({ pagado: true, forma: f }, () => { pagado.checked = false; forma.value = antes; });
+        aplicar(p, () => { p.pagado = true; p.forma = f; });
       };
       const preguntaForma = el('div', 'pregunta-forma', el('span', 'que', '¿Cómo ha pagado?'),
         ...datos.formas.map((f) => boton(f, pagarCon(f))), boton('Sin indicar', pagarCon('')),
         boton('Cancelar', () => { preguntaForma.hidden = true; pagado.checked = false; }, 'cancelar'));
       preguntaForma.hidden = true;
-      const controles = [estado, pagado, forma];
 
-      const etiqueta = el('span', 'etiqueta');
+      // Corta, para que quepa el nombre: «Sin cobrar» es entregado sin cobrar (va en ámbar, como su borde)
+      const etiqueta = el('span', 'etiqueta', p.estado === 'Entregado' && !p.pagado ? 'Sin cobrar'
+        : `${p.estado || '—'}${p.pagado && p.estado !== 'Entregado' ? ' · pagado' : ''}`);
       const caja = el('details', 'pedido',
         el('summary', 'pedido-linea', el('span', 'num', `Nº ${p.numero}`), el('span', 'quien', `${p.nombre} ${p.apellidos}`),
           etiqueta),
         el('div', 'pedido-cuerpo',
-          el('div', 'pedido-cab', el('span', 'fecha', cuando), el('span', 'total', euros.format(p.total)), tel),
+          el('div', 'pedido-cab', el('span', 'fecha', cuando), el('span', 'total', euros.format(p.total)),
+            falta ? el('span', 'falta', `⏱ Falta imprimir ${duracion(falta)}`) : null, tel),
           lineasPedido,
           p.comentario ? el('p', 'comentario', `«${p.comentario}»`) : null,
           el('div', 'pedido-acciones',
@@ -497,51 +783,22 @@ const Pedidos = (() => {
             el('label', 'campo-pagado', pagado, 'Pagado'),
             el('label', 'campo-forma', 'Forma de pago', forma),
             preguntaForma,
-            nota)));
+            nota(p.numero))));
+      caja.classList.toggle('pagado', p.pagado);
+      caja.classList.toggle('por-cobrar', !p.pagado && p.estado === 'Entregado');
+      caja.classList.toggle('cancelado', !vivo);
       caja.open = abiertos.has(p.numero);
       caja.addEventListener('toggle', () => { if (caja.open) abiertos.add(p.numero); else abiertos.delete(p.numero); });
-      const pintarClase = () => {
-        caja.classList.toggle('pagado', p.pagado);
-        caja.classList.toggle('por-cobrar', !p.pagado && p.estado === 'Entregado');
-        caja.classList.toggle('cancelado', p.estado === 'Cancelado');
-        // Corta, para que quepa el nombre: «Sin cobrar» es entregado sin cobrar (va en ámbar, como su borde)
-        etiqueta.textContent = p.estado === 'Entregado' && !p.pagado ? 'Sin cobrar'
-          : `${p.estado || '—'}${p.pagado && p.estado !== 'Entregado' ? ' · pagado' : ''}`;
-      };
-      pintarClase();
 
-      async function cambiar(cambios, deshacer) {
-        nota.textContent = 'Guardando en la hoja…';
-        controles.forEach((c) => { c.disabled = true; });
-        ocupada++;
-        try {
-          await fuente.actualizar(p.numero, cambios);
-          const antes = seccion(p);
-          Object.assign(p, cambios);
-          nota.textContent = '✓ Guardado';
-          setTimeout(() => { if (nota.textContent === '✓ Guardado') nota.textContent = ''; }, 2000);
-          datos.resumen = resumen(datos.pedidos);
-          pintarResumen();
-          pintarCuentas();
-          pintarClase();
-          // Entregado y pagado: se va a «Entregados» (y si se desmarca algo, vuelve a «Pendientes»)
-          if (seccion(p) !== antes) aviso(`Nº ${p.numero} pasa a ${NOMBRE_SECCION[seccion(p)]}`);
-          if (!FILTROS[filtro](p)) {
-            abiertos.delete(p.numero);
-            pintarLista();
-          }
-        } catch (e) {
-          deshacer();
-          nota.textContent = '';
-          aviso(`No se pudo guardar: ${e.message}`);
-        } finally {
-          ocupada--;
-          controles.forEach((c) => { c.disabled = false; });
-        }
-      }
+      // El estado a mano: «Hecho» da por impresas las piezas que faltaban y «Entregado», todas entregadas
       estado.addEventListener('change', () => {
-        const antes = p.estado;
-        cambiar({ estado: estado.value }, () => { estado.value = antes; });
+        const nuevo = estado.value;
+        aplicar(p, () => {
+          const lista = piezasSegunEstado(nuevo, p.lineas.map((l) => l.piezas));
+          p.lineas.forEach((l, i) => { l.piezas = lista[i]; });
+          p.estado = nuevo;
+          p.estadoAntes = undefined;
+        });
       });
       pagado.addEventListener('change', () => {
         if (pagado.checked && !forma.value) {
@@ -549,15 +806,166 @@ const Pedidos = (() => {
           return;
         }
         preguntaForma.hidden = true;
-        const antes = p.pagado;
-        cambiar({ pagado: pagado.checked }, () => { pagado.checked = antes; });
+        aplicar(p, () => { p.pagado = pagado.checked; });
       });
       forma.addEventListener('change', () => {
         if (!preguntaForma.hidden) { pagarCon(forma.value)(); return; }  // contesta a «¿Cómo ha pagado?» con la lista
-        const antes = p.forma;
-        cambiar({ forma: forma.value }, () => { forma.value = antes; });
+        aplicar(p, () => { p.forma = forma.value; });
       });
+      tarjetas.set(p.numero, caja);
       return caja;
+    }
+
+    // ---- «Por imprimir»: las piezas que faltan de todos los pedidos, del más antiguo al más nuevo ----
+    function pintarCola() {
+      const h = Number(horas.value.replace(',', '.'));
+      const disponible = horas.value.trim() && h > 0 ? h * 60 : null;
+      const c = cola(datos.pedidos, disponible, recien);
+      if (!c.piezas) {
+        planTexto.textContent = 'No queda nada por imprimir.';
+      } else if (disponible === null) {
+        planTexto.replaceChildren(`${piezasTexto(c.piezas)} por imprimir: ${duracion(c.minutos)}`
+          + `${c.sin_tiempo ? ` y ${c.sin_tiempo} sin tiempo` : ''}. Pon las horas que tienes y te marco lo que cabe.`);
+      } else if (c.caben) {
+        planTexto.replaceChildren(`Caben ${c.caben} de ${piezasTexto(c.piezas)} (${duracion(c.usado)}): si empiezas ya, `
+          + 'acabas ', fin(c.usado), `.${c.sin_tiempo ? ` Las que no tienen tiempo (${c.sin_tiempo}) no cuentan.` : ''}`);
+      } else {
+        const corta = Math.min(...c.entradas.filter((e) => e.minutos && e.faltan).map((e) => e.minutos));
+        planTexto.textContent = Number.isFinite(corta) ? `En ${duracion(disponible)} no cabe ninguna: la más corta tarda `
+          + `${duracion(corta)}.` : 'Ninguna tiene tiempo de impresión: no sé qué cabe.';
+      }
+      const busca = normalizar($('buscar').value.trim());
+      const entradas = c.entradas.filter(({ pedido: p, linea: l }) => !busca || normalizar(
+        `${p.numero} ${p.nombre} ${p.apellidos} ${l.ref} ${l.nombre} ${l.detalle}`).includes(busca));
+      $('lista').replaceChildren(...(entradas.length ? entradas.map((e) => entradaCola(e, disponible !== null))
+        : [el('p', 'vacio', c.entradas.length ? 'Nada coincide.' : VACIO.imprimir)]));
+    }
+
+    function entradaCola(e, conPlan) {
+      const { pedido: p, linea: l } = e;
+      const n = piezasDeLinea(l.piezas);
+      let marca = null;
+      if (!e.faltan) marca = el('span', 'marca hecha', '✓ Impreso');
+      else if (!e.minutos) marca = el('span', 'marca sin', 'Sin tiempo');
+      else if (conPlan && !e.caben) marca = el('span', 'marca no', 'No cabe');
+      else if (conPlan) marca = el('span', 'marca cabe', e.caben === e.faltan ? (e.faltan > 1 ? `✓ Caben las ${e.faltan}` : '✓ Cabe')
+        : `✓ Caben ${e.caben} de ${e.faltan}`);
+      const irPedido = boton(`Nº ${p.numero} · ${p.nombre} ${p.apellidos}`, () => verPedido(p), 'ir-pedido');
+      irPedido.title = 'Ver el pedido';
+      return el('div', `cola-item${!e.faltan ? ' hecho' : conPlan && e.minutos && !e.caben ? ' no-cabe' : ''}`,
+        el('div', 'cola-cab', irPedido, p.estado === 'Pendiente' ? el('span', 'sin-confirmar', 'sin confirmar') : null, marca),
+        el('div', 'cola-que', `${n} × ${l.nombre}`,
+          e.faltan && e.faltan < n ? el('span', 'faltan', ` · ${e.faltan === 1 ? 'falta 1' : `faltan ${e.faltan}`}`) : null),
+        l.detalle ? el('span', 'detalle', l.detalle) : null,
+        l.ref ? referencia(l.ref, (p.enlaces || {})[l.ref]) : null,
+        tiempoLinea(l, conPlan && e.minutos ? e : null),
+        controlPiezas(p, l),
+        nota(p.numero));
+    }
+
+    // Desde «Por imprimir», el pedido entero: en su pestaña, desplegado
+    function verPedido(p) {
+      $('buscar').value = '';
+      abiertos.add(p.numero);
+      ponerFiltro(seccion(p));
+      const caja = tarjetas.get(p.numero);
+      if (caja) caja.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }
+
+    // ---- Cambios: se ven al momento y se guardan en la hoja (guardar) ----
+    function cambiarPiezas(p, l, nuevas) {
+      const indice = p.lineas.indexOf(l);
+      if (filtro === 'imprimir') recien.add(`${p.numero}:${indice}`);
+      aplicar(p, () => {
+        l.piezas = nuevas;
+        const nuevo = estadoSegunPiezas(p.estado, p.lineas.map((x) => x.piezas), p.estadoAntes);
+        if (nuevo === p.estado) return '';
+        if (!AUTOMATICOS.includes(p.estado)) p.estadoAntes = p.estado;
+        p.estado = nuevo;
+        return nuevo === 'Entregado' ? `Nº ${p.numero}: todo entregado → «Entregado»`
+          : nuevo === 'Hecho' ? `Nº ${p.numero}: todo impreso → «Hecho»` : `Nº ${p.numero} vuelve a «${nuevo}»`;
+      }, ESPERA_PIEZAS);
+    }
+
+    // `cambio` cambia el pedido (y puede devolver un aviso). Si pasa a otra pestaña (p. ej. entregado y pagado, a
+    // «Entregados»), se dice
+    function aplicar(p, cambio, demora = 0) {
+      const antes = seccion(p);
+      const avisos = [cambio()].filter(Boolean);
+      if (seccion(p) !== antes) avisos.push(`Nº ${p.numero} pasa a ${NOMBRE_SECCION[seccion(p)]}`);
+      if (avisos.length) aviso(avisos.join(' · '));
+      repintar(p);
+      guardar(p, demora);
+    }
+
+    function repintar(p) {
+      datos.resumen = resumen(datos.pedidos);
+      pintarResumen();
+      pintarCuentas();
+      if (filtro === 'imprimir') { pintarCola(); return; }
+      if (!FILTROS[filtro](p)) {
+        abiertos.delete(p.numero);
+        pintarLista();
+        return;
+      }
+      const vieja = tarjetas.get(p.numero);
+      if (vieja && vieja.isConnected) vieja.replaceWith(tarjeta(p));
+    }
+
+    // Lo que tiene la hoja de un pedido (`p.enHoja`: lo último que se leyó o se guardó). Se manda solo lo que cambia;
+    // los cambios de cada pedido van de uno en uno (si llega otro mientras se guarda, después) y, si falla, el pedido
+    // vuelve a lo que tiene la hoja
+    const enHoja = (p) => ({ estado: p.estado, pagado: p.pagado, forma: p.forma,
+      piezas: p.lineas.map((l) => textoPiezas(l.piezas)) });
+    const guardando = new Map();  // número → {temporizador, enVuelo, otraVez}
+
+    function guardar(p, demora) {
+      let g = guardando.get(p.numero);
+      if (!g) {
+        g = { temporizador: 0, enVuelo: false, otraVez: false };
+        guardando.set(p.numero, g);
+        ocupada++;
+      }
+      ponerNota(p.numero, 'Guardando en la hoja…');
+      if (g.enVuelo) { g.otraVez = true; return; }
+      clearTimeout(g.temporizador);
+      g.temporizador = setTimeout(() => enviar(p, g), demora);
+    }
+
+    async function enviar(p, g) {
+      g.enVuelo = true;
+      const ahora = enHoja(p), antes = p.enHoja, cambios = {};
+      for (const k of ['estado', 'pagado', 'forma']) if (ahora[k] !== antes[k]) cambios[k] = ahora[k];
+      if (ahora.piezas.join('\n') !== antes.piezas.join('\n')) cambios.piezas = ahora.piezas;
+      let fallo = null;
+      try {
+        if (Object.keys(cambios).length) await fuente.actualizar(p.numero, cambios);
+        p.enHoja = ahora;
+      } catch (e) {
+        fallo = e;
+      }
+      g.enVuelo = false;
+      if (!fallo && g.otraVez) {
+        g.otraVez = false;
+        enviar(p, g);
+        return;
+      }
+      guardando.delete(p.numero);
+      ocupada--;
+      if (!fallo) {
+        ponerNota(p.numero, '✓ Guardado');
+        setTimeout(() => { if (notas.get(p.numero) === '✓ Guardado') ponerNota(p.numero, ''); }, 2000);
+        return;
+      }
+      const h = p.enHoja;
+      Object.assign(p, { estado: h.estado, pagado: h.pagado, forma: h.forma });
+      piezas(h.piezas.join('\n'), p.lineas, h.estado).forEach((c, i) => { p.lineas[i].piezas = c; });
+      ponerNota(p.numero, '');
+      aviso(`No se pudo guardar: ${fallo.message}`);
+      datos.resumen = resumen(datos.pedidos);
+      pintarResumen();
+      pintarCuentas();
+      pintarLista();
     }
 
     async function cargar() {
@@ -567,8 +975,15 @@ const Pedidos = (() => {
       $('actualizar').disabled = true;
       try {
         const j = await fuente.leer();
-        const pedidos = (j.pedidos || []).map((p) => ({ ...p, lineas: lineas(p.productos) }))
-          .sort((a, b) => (b.numero || 0) - (a.numero || 0));  // el más nuevo primero
+        const tiempos = j.tiempos || {};
+        const pedidos = (j.pedidos || []).map((p) => {
+          const lista = lineas(p.productos);
+          piezas(p.piezas, lista, p.estado).forEach((c, i) => { lista[i].piezas = c; lista[i].minutos = minutosDe(lista[i], tiempos); });
+          // Tal cual está en la hoja (vacío en los de antes): al primer cambio se escribe lo que se ve
+          const textos = String(p.piezas || '').split(/\r?\n/);
+          return { ...p, lineas: lista, enHoja: { estado: p.estado, pagado: p.pagado, forma: p.forma,
+            piezas: lista.map((_, i) => (textos[i] || '').trim()) } };
+        }).sort((a, b) => (b.numero || 0) - (a.numero || 0));  // el más nuevo primero
         datos = { ...j, pedidos, resumen: resumen(pedidos) };
         leido = Date.now();
         $('sinConexion').hidden = true;
@@ -596,14 +1011,17 @@ const Pedidos = (() => {
     cargar();
   }
 
-  return { iniciar, lineas, resumen, seccion, aviso };
+  return { iniciar, lineas, resumen, seccion, aviso, piezas, textoPiezas, estadoSegunPiezas, piezasSegunEstado, duracion,
+    cola };
 })();
 
 </script>
 <script>
 (() => {
   const DIRECCION = "https://script.google.com/macros/s/AKfycbxSRWU7H3GYJGTxM7y1zY1OwjfMYUZvA-IjmLmyWoodvbArzvtc9yGPuL5rJ0LVe1R8/exec";  // la del script de la hoja (/exec), la misma a la que manda los pedidos el catálogo
-  const VERSION = 5;  // la del script que hace falta (catalogo/pedidos.py, VERSION_SCRIPT)
+  const VERSION = 6;  // la del script que hace falta (catalogo/pedidos.py, VERSION_SCRIPT)
+  // Lo que tarda en imprimirse cada producto (catalogo/pedidos.py, tiempos): del catálogo, al publicar la web
+  const TIEMPOS = {"codigos": {"P-001": 229, "P-002": 22, "P-003": 86, "P-004": 7, "P-005": 32, "P-006": 54, "P-007": 126, "P-008": 99, "P-009": 96, "P-010": 342, "P-011": 482, "P-012": 160, "P-013": 394, "P-014": 89, "P-043": 25, "P-049": 111, "P-050": 100, "P-108": 114, "P-015": 645, "P-016": 494, "P-017": 135, "P-051": 186, "P-044": 244, "P-018": 104, "P-019": 68, "P-020": 596, "P-052": 8, "P-190": 14, "P-053": 110, "P-021": 143, "P-045": 389, "P-022": 453, "P-191": 557, "P-054": 353, "P-023": 111, "P-024": 179, "P-192": 267, "P-193": 211, "P-109": 60, "P-055": 948, "P-046": 184, "P-047": 571, "P-056": 220, "P-194": 20, "P-110": 26, "P-048": 46, "P-025": 17, "P-057": 379, "P-058": 7, "P-026": 279, "P-059": 57, "P-027": 1059, "P-195": 17, "P-060": 218, "P-111": 126, "P-112": 133, "P-203": 4, "P-204": 15, "P-205": 26, "P-206": 30, "P-207": 15, "P-208": 170, "P-209": 177, "P-210": 167, "P-211": 40, "P-212": 116, "P-213": 131, "P-214": 39, "P-215": 39, "P-216": 14, "P-217": 30, "P-218": 44, "P-219": 11, "P-220": 45, "P-272": 108, "P-273": 335, "P-274": 33, "P-275": 234, "P-276": 125, "P-277": 36, "P-278": 12, "P-279": 487, "P-280": 10, "P-281": 178, "P-282": 15, "P-283": 40, "P-284": 175, "P-285": 61, "P-286": 13, "P-287": 18, "P-288": 223, "P-289": 277, "P-290": 245, "P-291": 22, "P-292": 143, "P-293": 30, "P-294": 72, "P-061": 43, "P-062": 101, "P-063": 60, "P-064": 162, "P-065": 31, "P-066": 516, "P-067": 19, "P-068": 95, "P-069": 519, "P-070": 25, "P-071": 490, "P-072": 28, "P-073": 250, "P-074": 74, "P-075": 505, "P-076": 110, "P-077": 201, "P-078": 90, "P-079": 95, "P-080": 321, "P-081": 11, "P-082": 28, "P-083": 115, "P-084": 168, "P-085": 182, "P-086": 40, "P-113": 240, "P-114": 51, "P-115": 13, "P-116": 113, "P-117": 80, "P-118": 142, "P-119": 333, "P-120": 229, "P-121": 232, "P-122": 341, "P-123": 210, "P-124": 274, "P-125": 525, "P-126": 372, "P-127": 441, "P-128": 384, "P-129": 621, "P-130": 55, "P-131": 208, "P-132": 87, "P-133": 7, "P-134": 46, "P-135": 509, "P-136": 94, "P-137": 546, "P-138": 35, "P-139": 40, "P-140": 603, "P-141": 505, "P-142": 80, "P-143": 30, "P-144": 269, "P-145": 27, "P-146": 338, "P-147": 37, "P-148": 62, "P-149": 44, "P-150": 23, "P-151": 1564, "P-152": 155, "P-153": 161, "P-154": 229, "P-155": 41, "P-156": 177, "P-157": 50, "P-158": 222, "P-159": 449, "P-160": 392, "P-161": 15, "P-162": 459, "P-163": 431, "P-164": 285, "P-306": 165, "P-221": 26, "P-222": 27, "P-223": 22, "P-224": 175, "P-225": 40, "P-226": 52, "P-227": 87, "P-228": 66, "P-229": 287, "P-230": 17, "P-231": 37, "P-232": 1399, "P-165": 939, "P-166": 234, "P-167": 696, "P-168": 8, "P-169": 75, "P-170": 53, "P-171": 579, "P-172": 72, "P-173": 29, "P-174": 28, "P-175": 46, "P-176": 44, "P-233": 201, "P-234": 89, "P-235": 834, "P-236": 80, "P-237": 19, "P-238": 164, "P-239": 78, "P-240": 6, "P-028": 319, "P-029": 113, "P-030": 12, "P-031": 32, "P-087": 21, "P-307": 51, "P-308": 31, "P-088": 508, "P-241": 85, "P-310": 12, "P-177": 92, "P-309": 141, "P-089": 80, "P-090": 9, "P-295": 671, "P-296": 788, "P-032": 23, "P-178": 446, "P-091": 23, "P-297": 330, "P-092": 86, "P-093": 113, "P-033": 479, "P-094": 282, "P-179": 69, "P-034": 108, "P-196": 5, "P-095": 401, "P-035": 16, "P-036": 142, "P-298": 126, "P-299": 96, "P-037": 765, "P-300": 7, "P-096": 15, "P-180": 126, "P-301": 113, "P-302": 362, "P-303": 360, "P-197": 761, "P-181": 185, "P-304": 322, "P-097": 17, "P-182": 187, "P-183": 504, "P-198": 1197, "P-199": 384, "P-098": 289, "P-038": 69, "P-200": 278, "P-201": 4, "P-099": 45, "P-100": 32, "P-184": 198, "P-185": 24, "P-101": 155, "P-039": 558, "P-305": 13, "P-040": 122, "P-186": 119, "P-202": 26, "P-102": 277, "P-187": 288, "P-103": 36, "P-041": 45, "P-104": 86, "P-105": 20, "P-106": 333, "P-188": 393, "P-107": 83, "P-242": 17, "P-243": 66, "P-244": 125, "P-245": 37, "P-246": 78, "P-247": 26, "P-248": 554, "P-249": 10, "P-250": 403, "P-251": 25, "P-252": 85, "P-253": 38, "P-254": 32, "P-255": 14, "P-256": 9, "P-257": 84, "P-258": 62, "P-259": 10, "P-260": 43, "P-261": 250, "P-189": 132, "P-042": 59, "P-262": 79, "P-263": 323, "P-264": 113, "P-265": 113, "P-266": 251, "P-267": 131, "P-311": 15, "P-268": 205, "P-269": 242, "P-270": 342, "P-271": 941}, "nombres": {"bebedero de gravedad para gatos con patas": "P-001", "medidor de raciones de espaguetis": "P-002", "bandeja deslizante para pringles (tubo de 156 g)": "P-003", "pinza para aprender a usar palillos chinos": "P-004", "cortador de galletas del grinch": "P-005", "cortador de galletas de girasol": "P-006", "posavasos modernos": "P-007", "soporte para estropajo scrub daddy sentado": "P-008", "soporte para estropajo scrub daddy que hace pis": "P-009", "portarrollos de cocina vertical en espiral": "P-010", "dispensador de pastillas para el lavavajillas": "P-011", "organizador de sobres de cocina": "P-012", "escurridor para estropajos y esponjas": "P-013", "reposacucharas inclinado": "P-014", "chapa para mascota con nombre y telefono": "P-043", "litofania curva de 100 mm": "P-049", "organizador compacto de discos de algodon y bastoncillos": "P-050", "macetero en forma de gota de agua": "P-108", "dispensador de huevos": "P-015", "aplastador de latas": "P-016", "pinzas de cocina tipo tenedor": "P-017", "portacepillos de dientes de pared": "P-051", "cueva de roca para reptiles": "P-044", "tazas medidoras apilables": "P-018", "soporte ajustable para tapas de ollas": "P-019", "cuenco para pistachos": "P-020", "colgador elegante para cepillos de dientes": "P-052", "boquilla de riego para botella": "P-190", "dispensador deslizante para pringles (normal y xl)": "P-053", "prensa para hamburguesas": "P-021", "dispensador de pared para bolsas de excrementos de perro": "P-045", "cuenco flor de loto": "P-022", "macetero capsula": "P-191", "portabrochas de maquillaje con lazo": "P-054", "soporte para estropajo scrub daddy con patas articuladas": "P-023", "bandeja deslizante para tubo de pringles": "P-024", "comedero para pajaros con botella (rosca de 28 y 48 mm)": "P-192", "macetero media luna": "P-193", "telarana de halloween para esquina de puerta": "P-109", "portarrollos de papel higienico con forma de caca": "P-055", "pala para arena de gato": "P-046", "bebedero para gatos con botella de plastico": "P-047", "jabonera de pato": "P-056", "platillo pequeno para maceta": "P-194", "gato asomandose": "P-110", "silbato potente mini": "P-048", "pinza grande para cerrar bolsas": "P-025", "caracol portarrollos de papel higienico": "P-057", "pinza para bolsa de basura": "P-058", "soporte para tapas ikea 365+": "P-026", "trasvasador de pasta de dientes para viaje": "P-059", "dispensador de huevos de doble carril (mayor capacidad)": "P-027", "tapa antiinsectos para latas de cerveza y refresco": "P-195", "muneco portarrollos de papel higienico": "P-060", "letras burbuja": "P-111", "letras burbuja 3d del abecedario": "P-112", "adorno navideno de acebo": "P-203", "bola de navidad con baston de caramelo": "P-204", "cortadores de galletas navidenos": "P-205", "adornos navidenos": "P-206", "bola de navidad con copo de nieve (modelo 4)": "P-207", "portavelas arbol de navidad": "P-208", "lamparita arbol de navidad": "P-209", "adorno navideno con enganche tradicional": "P-210", "copos de nieve para colgar (pack n.º 2)": "P-211", "ciervo en las montanas": "P-212", "bola plana de hilos con arbol de navidad": "P-213", "baston de caramelo navideno": "P-214", "adorno copo de nieve": "P-215", "copo de nieve antiestres": "P-216", "gato navideno «meowy christmas»": "P-217", "animalitos navidenos decorativos": "P-218", "mini gorro de papa noel": "P-219", "copo de nieve": "P-220", "caja apilable para pilas (estilo caja de cerveza)": "P-272", "soporte para auriculares": "P-273", "soporte ondulado para el movil": "P-274", "portalapices cohete spacex": "P-275", "soporte para gafas de lectura": "P-276", "soporte para mando lg magic remote": "P-277", "marcapaginas con portaboligrafo": "P-278", "organizador para rotuladores stabilo": "P-279", "marcapaginas": "P-280", "soporte para iphone con logo de apple": "P-281", "pinza de gafas de sol para el parasol del coche": "P-282", "organizador para cable de apple de 1 m": "P-283", "portalapices hexagonal": "P-284", "soporte para posits": "P-285", "extension de percha para armario": "P-286", "marcapaginas florales": "P-287", "soporte vertical doble y ajustable para portatil": "P-288", "portalapices con forma de plumifero": "P-289", "portaboligrafos dragon": "P-290", "organizador de cables personalizable": "P-291", "colgador para auriculares": "P-292", "organizador de cables": "P-293", "pasacables para mesa": "P-294", "soporte para cabezales de cepillo oral-b": "P-061", "dispensador de bastoncillos": "P-062", "soporte de pared para cepillo electrico oral-b": "P-063", "letrero para el bano": "P-064", "soporte individual para cepillo oral-b": "P-065", "jabonera voronoi": "P-066", "soporte de pared para cabezales oral-b / braun": "P-067", "prensa para tubo de pasta de dientes": "P-068", "caja de viaje para discos de algodon": "P-069", "atrapapelos para el desague": "P-070", "organizador giratorio para maquillaje y boligrafos": "P-071", "soporte para esponja de maquillaje": "P-072", "organizador de bano": "P-073", "colgador para la ducha": "P-074", "caja de viaje ondulada para bastoncillos": "P-075", "soporte para cepillo oral-b": "P-076", "jabonera con canal de desague": "P-077", "organizador de discos de algodon y bastoncillos": "P-078", "bandeja para jabon": "P-079", "estante de esquina para la ducha": "P-080", "gancho sencillo para mampara": "P-081", "gancho toallero para mampara": "P-082", "caja de viaje para bastoncillos": "P-083", "soporte para cepillo y pasta de dientes": "P-084", "jabonera escurridora": "P-085", "gancho para mampara de cristal": "P-086", "maceta calada": "P-113", "portavelas para vela led": "P-114", "llavero tnt de minecraft": "P-115", "figura gato fantasma de halloween": "P-116", "lirio decorativo de pared": "P-117", "posavasos de cafe": "P-118", "portalapices de conejito": "P-119", "jarron de hojas tropicales": "P-120", "buda haciendo el dab": "P-121", "macetero triple para suculentas": "P-122", "maceta de pinchos": "P-123", "jarron moderno": "P-124", "bandeja vaciabolsillos organica": "P-125", "jarron barroco de acanto": "P-126", "maceta tatooine de star wars": "P-127", "maceta geodesica": "P-128", "maceta robot con doble vaso": "P-129", "incensario minimalista": "P-130", "jarron": "P-131", "maceta mid-century con plato y estrias": "P-132", "rosa": "P-133", "bandeja para anillos": "P-134", "cuenco calado voronoi (vertical)": "P-135", "platito con soporte para anillos": "P-136", "maceta cubica": "P-137", "munecos de nieve decorativos": "P-138", "cuadro de pared: jesus en la cruz": "P-139", "cuenco voronoi de base plana": "P-140", "caja corazon trenzada (baja)": "P-141", "cartel «se busca» de roronoa zoro": "P-142", "cartel wc": "P-143", "bloques para contar dias, semanas, meses y anos": "P-144", "gato decorativo de pared": "P-145", "jarron margarita": "P-146", "stitch para pared o puerta": "P-147", "colgador de llaves": "P-148", "colgador de sombreros": "P-149", "cuencos de corazon en 3 tamanos": "P-150", "botellero elegante": "P-151", "bandeja organica": "P-152", "jarron de flores efecto madera": "P-153", "tope de puerta hodor (juego de tronos)": "P-154", "soporte tripode para echo dot (3.ª generacion)": "P-155", "portarrollos oveja y cabra": "P-156", "letrero «coffee»": "P-157", "lampara con el logo de minecraft": "P-158", "jarron y maceta de escamas": "P-159", "cuenco calado de cuadrados": "P-160", "soporte minimalista para fotos y tarjetas": "P-161", "estante": "P-162", "vaso efecto mimbre": "P-163", "incensario barco vikingo": "P-164", "dragon de huesos articulado": "P-306", "caritas de halloween (adorno o colgante)": "P-221", "iman de pesadilla antes de navidad": "P-222", "murcielago de pared para halloween": "P-223", "hoja de arce": "P-224", "casa de halloween": "P-225", "telarana para esquina": "P-226", "tres fantasmas adorables": "P-227", "gatito fantasma adorable": "P-228", "arbol tenebroso": "P-229", "cartel de pared «boo!» de halloween": "P-230", "murcielagos vintage de pared para halloween": "P-231", "calavera pulpo": "P-232", "bandeja efecto cuerda": "P-165", "estante seta de pared": "P-166", "cuenco efecto punto": "P-167", "sombra de hollow knight para pared": "P-168", "soporte de pared para mando (universal)": "P-169", "soporte de pared para mando de ps5": "P-170", "arbol de pared": "P-171", "conejo de pascua con flores para pared": "P-172", "soporte universal para mandos de consola": "P-173", "homer simpson de pared": "P-174", "bill bala de super mario para pared": "P-175", "desdentao para la puerta": "P-176", "pareja de conejitos de pascua": "P-233", "escultura de conejo de pascua": "P-234", "3 huevos de pascua fibonacci": "P-235", "cruz con el nombre de dios (יהוה)": "P-236", "llavero de conejo de pascua": "P-237", "corona de huevos de pascua": "P-238", "conejo de pascua decorativo": "P-239", "huevo de pascua": "P-240", "posavasos decorativo": "P-028", "servilletero arbol": "P-029", "cortador de galletas de batman": "P-030", "soporte para spray": "P-031", "gancho para abrigos": "P-087", "soporte para mando de xbox": "P-307", "soporte invisible para mando de xbox": "P-308", "cuenco para ovillos de lana": "P-088", "portavelas caldero": "P-241", "llavero corazon low poly": "P-310", "escultura del dia de la madre": "P-177", "rana de percusion": "P-309", "mini calzador": "P-089", "exprimidor de pasta de dientes": "P-090", "cubilete en espiral para boligrafos": "P-295", "portalapices trenzado": "P-296", "pinza para cerrar bolsas": "P-032", "cuenco efecto cuerda": "P-178", "estuche de viaje para cepillo de dientes": "P-091", "colgador de bolso para la mesa": "P-297", "estuche para cepillo de dientes de una pieza": "P-092", "jabonera": "P-093", "lavador de frutas y verduras": "P-033", "posavasos trenzados": "P-094", "soporte para google nest / home mini": "P-179", "posavasos celtas con soporte": "P-034", "pinzas para plantas (2 tamanos)": "P-196", "juego de bandejas vaciabolsillos organicas": "P-095", "abrelatas para refrescos": "P-035", "atril para libros": "P-036", "soporte para pilas aa y aaa": "P-298", "portalapices gato": "P-299", "dispensador para 10 huevos": "P-037", "marcapaginas gato asomado": "P-300", "tope de puerta": "P-096", "maceta torre": "P-180", "caja para pilas aa": "P-301", "organizador de escritorio": "P-302", "portaboligrafos": "P-303", "soporte de pared para manguera": "P-197", "maceta huevo de dragon": "P-181", "organizador modular de pilas": "P-304", "sujetalibros": "P-097", "portavelas fantasma de halloween": "P-182", "jarron de aletas": "P-183", "maceta hexagonal": "P-198", "maceta luna": "P-199", "organizador para mandos a distancia": "P-098", "tapa para el agujero del fregadero": "P-038", "maceta (modelo 02)": "P-200", "clip para plantas": "P-201", "tope de puerta «stop»": "P-099", "gancho de pared": "P-100", "macetas retorcidas (5 modelos)": "P-184", "portavelas moderno": "P-185", "vaso para cepillo y pasta de dientes": "P-101", "jabonera o portaestropajos": "P-039", "clip gigante": "P-305", "bote para utensilios de cocina": "P-040", "rosa con tallo y hoja": "P-186", "plato para maceta": "P-202", "soporte para mandos a distancia": "P-102", "adorno de navidad": "P-187", "colgador de toallas con bola": "P-103", "filtro para el fregadero": "P-041", "soporte doble para cepillos oral-b": "P-104", "soporte para maquinilla de afeitar": "P-105", "modulo gridfinity para gafas": "P-106", "maceta elefante": "P-188", "cuna tope de puerta de panal": "P-107", "decoraciones navidenas": "P-242", "copo de nieve navideno": "P-243", "reno navideno tumbado": "P-244", "adorno jack con gorro de papa noel": "P-245", "estrella para el arbol de navidad": "P-246", "grinch «ho ho ho»": "P-247", "lampara pueblo de duendes navideno": "P-248", "bola de navidad con copo de nieve (modelo s3.07)": "P-249", "pinguino tux de cristal (linux) navideno": "P-250", "adorno de baloncesto": "P-251", "servilletero de arboles navidenos": "P-252", "colgador para adornos del arbol": "P-253", "gorro de papa noel para el arbol": "P-254", "etiqueta de regalo o llavero de corazon": "P-255", "bola de navidad con copo de nieve (modelo s3.11)": "P-256", "adorno grinch con cafe": "P-257", "adorno para el arbol de navidad": "P-258", "campanita": "P-259", "letrero «happy new year»": "P-260", "soporte botella enano": "P-261", "vela flotante goteante": "P-189", "reposacucharas": "P-042", "trio de renos invernales": "P-262", "belen navideno": "P-263", "esquinera de puerta navidena": "P-264", "cuenta regresiva navidena": "P-265", "bandeja de arbol de navidad": "P-266", "majestuoso adorno de ciervo navideno": "P-267", "llavero con nombre": "P-311", "muneco de nieve tejido": "P-268", "santa claus tejido": "P-269", "belen iluminado": "P-270", "munecos navidenos": "P-271"}};
   const ALMACEN = 'negoqr-pedidos-clave';
   const $ = (id) => document.getElementById(id);
 
@@ -671,7 +1089,7 @@ const Pedidos = (() => {
       + 'Pedidos → «📱 En el móvil» y escanea el código con la cámara. Solo hace falta una vez.');
   } else {
     Pedidos.iniciar({
-      leer: () => alScript({ accion: 'pedidos' }),
+      leer: async () => ({ ...(await alScript({ accion: 'pedidos' })), tiempos: TIEMPOS }),
       actualizar: (numero, cambios) => alScript({ accion: 'actualizar', numero, ...cambios }),
     });
     $('olvidarCaja').hidden = false;
