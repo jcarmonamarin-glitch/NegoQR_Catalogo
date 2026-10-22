@@ -778,6 +778,13 @@ footer .legal{ margin-top: 18px; font-size: 12px; color: var(--suave); }
     $('errorPedido').classList.toggle('oculto', !texto);
   }
 
+  // El autocompletado del móvil escribe el teléfono con +34 y quien lo escribe a mano, sin él: uno español va a la hoja
+  // con sus 9 cifras, sin prefijo ni espacios, para que estén todos igual (uno de otro país, tal cual)
+  function sinPrefijo(telefono) {
+    const m = telefono.replace(/\D/g, '').match(/^(?:0034|34)?(\d{9})$/);
+    return m ? m[1] : telefono.trim();
+  }
+
   $('formPedido').addEventListener('submit', async (ev) => {
     ev.preventDefault();
     error('');
@@ -799,7 +806,7 @@ footer .legal{ margin-top: 18px; font-size: 12px; color: var(--suave); }
     // `detalle`: los colores y el texto de cada línea (web/pedidos.gs lo pone en la hoja junto al producto); `ref` y
     // `printables`: su código y su modelo en Printables (con ellos la hoja apunta el código y el enlace al modelo)
     const pedido = {
-      nombre: campos.nombre.value.trim(), apellidos: campos.apellidos.value.trim(), telefono: campos.telefono.value.trim(),
+      nombre: campos.nombre.value.trim(), apellidos: campos.apellidos.value.trim(), telefono: sinPrefijo(campos.telefono.value),
       comentario: $('fComentario').value.trim(), web: $('fWeb').value,
       lineas: [...cesta.values()].map((l) => {
         const p = porId.get(l.id);

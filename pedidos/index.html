@@ -228,6 +228,24 @@ button:active:not(:disabled){ transform: translateY(1px); }
   color: var(--accent); font-size: 13px; font-weight: 600; }
 .pregunta-forma button.cancelar{ border-color: var(--line-fuerte); color: var(--ink-dim); }
 
+/* «Clientes»: una línea por cliente (por su teléfono) que se despliega con todos sus pedidos */
+.cliente{ border: 1px solid var(--line); border-radius: 12px; background: rgba(255, 255, 255, .02); }
+.cliente-linea{ display:flex; align-items:center; gap: 10px; padding: 10px 14px; cursor: pointer; list-style: none; }
+.cliente-linea::-webkit-details-marker{ display: none; }
+.cliente-linea::before{ content: "▸"; flex: none; font-size: 12px; color: var(--ink-faint); transition: transform .15s; }
+.cliente[open] > .cliente-linea::before{ transform: rotate(90deg); }
+.cliente-linea .quien-caja{ flex: 1; min-width: 0; display:flex; flex-direction: column; gap: 1px; }
+.cliente-linea .quien{ font-weight: 700; line-height: 1.25; overflow-wrap: anywhere; }
+.cliente-linea .datos-cliente{ font-size: 12.5px; color: var(--ink-dim); }
+.cliente .debe{ color: #f5b14a; font-weight: 600; }
+.cliente .al-dia{ color: var(--accent); }
+.cliente-linea .cuantos{ flex: none; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--line-fuerte);
+  font-size: 12px; color: var(--ink-dim); white-space: nowrap; }
+.cliente-cuerpo{ display:flex; flex-direction: column; gap: 6px; padding: 10px; border-top: 1px solid var(--line); }
+.cliente-cab{ display:flex; flex-wrap:wrap; align-items:center; justify-content: space-between; gap: 4px 14px; padding: 0 4px 4px; }
+.cliente-cab .gastado{ font-size: 13.5px; font-weight: 700; }
+.cliente-cab .tel{ color: var(--ink-dim); font-size: 13px; }
+
 /* «Por imprimir»: cuántas horas hay y lo que cabe (plan-dia), y una entrada por línea con piezas que faltan */
 .plan-dia{ display:flex; flex-wrap:wrap; align-items:center; gap: 8px 16px; margin-bottom: 12px; padding: 10px 12px;
   border: 1px solid var(--line); border-radius: 12px; background: rgba(255, 255, 255, .02); }
@@ -289,9 +307,15 @@ button:active:not(:disabled){ transform: translateY(1px); }
   .pedido-linea .etiqueta{ font-size: 12.5px; }
   .pedido-cuerpo{ padding: 0 12px 12px; }
   .pedido-cab{ gap: 4px 10px; }
-  .pedido-cab .tel{ padding: 7px 12px; border-radius: 999px; font-size: 14px; font-weight: 600;
+  .pedido-cab .tel, .cliente-cab .tel{ padding: 7px 12px; border-radius: 999px; font-size: 14px; font-weight: 600;
     text-decoration: none; color: #74e3a4; background: rgba(37, 211, 102, .12); border: 1px solid rgba(37, 211, 102, .35); }
-  .pedido-cab .tel::before{ content: "💬 "; }
+  .pedido-cab .tel::before, .cliente-cab .tel::before{ content: "💬 "; }
+  .cliente-linea{ min-height: 56px; padding: 8px 12px; gap: 8px; }
+  .cliente-linea .quien{ font-size: 15.5px; }
+  .cliente-linea .datos-cliente{ font-size: 13.5px; }
+  .cliente-linea .cuantos{ font-size: 12.5px; }
+  .cliente-cuerpo{ padding: 8px 6px; }
+  .cliente-cab .gastado{ font-size: 14.5px; }
   .pedido ul{ font-size: 14.5px; }
   .pedido .detalle{ font-size: 13.5px; }
   .pedido .ref, .cola-item .ref, .panel-imprimir .ref{ margin: 5px 0 6px; padding: 7px 12px; font-size: 13.5px; }  /* para acertar con el dedo */
@@ -371,6 +395,7 @@ button:active:not(:disabled){ transform: translateY(1px); }
         <div class="filtros" role="group" aria-label="Filtrar">
           <button type="button" class="activo" data-filtro="pendientes">Pendientes</button>
           <button type="button" data-filtro="imprimir">Por imprimir</button>
+          <button type="button" data-filtro="clientes">Clientes</button>
           <button type="button" data-filtro="entregados">Entregados</button>
           <button type="button" data-filtro="cobrar">Por cobrar</button>
           <button type="button" data-filtro="cancelados">Cancelados</button>
@@ -398,7 +423,8 @@ button:active:not(:disabled){ transform: translateY(1px); }
 // el móvil, directamente al script de la hoja de Google. Aquí se leen las líneas de cada pedido, se hace el resumen y
 // se pinta todo; cada cambio de estado, cobro, forma de pago o de las piezas se ve al momento y va a la hoja. Los
 // pedidos van por pestañas (`seccion`: «Pendientes», «Entregados» —entregados y pagados— y «Cancelados»), cada uno
-// plegado en una línea; «Por imprimir» es otra cosa: las piezas que faltan de todos los pedidos (`cola`).
+// plegado en una línea; «Por imprimir» es otra cosa: las piezas que faltan de todos los pedidos (`cola`); y
+// «Clientes», los pedidos de cada persona juntos (`clientes`).
 //   Pedidos.iniciar({ leer: async () => ({ pedidos, hoja, estados, formas, tiempos }), actualizar: async (numero, cambios) => {} })
 const Pedidos = (() => {
   // «2 × P-037 Chapa para mascota (2,50 €) — Chapa: Negro · Borde y letras: Amarillo · Nombre: «Milo»». El código
@@ -528,6 +554,46 @@ const Pedidos = (() => {
     return [...productos.values()].map((p) => ({ ...p, variantes: [...p.variantes] }));
   }
 
+  // Las cifras de un teléfono sin prefijo español: «+34 611 22 33 44», «0034611223344» y «611223344» son el mismo
+  // (el autocompletado del móvil pone el +34 y a mano casi nadie lo escribe). Uno de otro país, con el suyo
+  function cifras(telefono) {
+    let d = String(telefono || '').replace(/\D/g, '');
+    if (d.startsWith('00')) d = d.slice(2);
+    return d.length === 11 && d.startsWith('34') ? d.slice(2) : d;
+  }
+
+  // Como se enseña: uno español, «611 223 344»; otro, tal cual
+  function telefonoBonito(telefono) {
+    const d = cifras(telefono);
+    return d.length === 9 ? d.replace(/(\d{3})(\d{3})(\d{3})/, '$1 $2 $3') : String(telefono || '').trim();
+  }
+
+  // La misma persona es el mismo teléfono (decisión del usuario); sin teléfono, por su nombre y apellidos
+  function clienteDe(p) {
+    const t = cifras(p.telefono);
+    return t ? `t${t}` : `n${`${p.nombre || ''} ${p.apellidos || ''}`.toLowerCase().normalize('NFD')
+      .replace(/[̀-ͯ]/g, '').replace(/\s+/g, ' ').trim()}`;
+  }
+
+  // Los pedidos de cada cliente juntos, primero quien ha pedido hace menos: su nombre (el del último pedido), sus pedidos
+  // del más nuevo al más antiguo, lo que ha gastado y lo que debe (sin cancelados) y las piezas que le faltan por imprimir
+  function clientes(pedidos) {
+    const grupos = new Map();
+    for (const p of [...pedidos].sort((a, b) => (b.numero || 0) - (a.numero || 0))) {
+      const clave = clienteDe(p);
+      if (!grupos.has(clave)) {
+        grupos.set(clave, { clave, nombre: `${p.nombre || ''} ${p.apellidos || ''}`.trim(), telefono: p.telefono || '', pedidos: [] });
+      }
+      grupos.get(clave).pedidos.push(p);
+    }
+    const suma = (lista) => Math.round(lista.reduce((t, p) => t + (p.total || 0), 0) * 100) / 100;
+    return [...grupos.values()].map((c) => {
+      const vivos = c.pedidos.filter((p) => p.estado !== 'Cancelado');
+      return { ...c, total: suma(vivos), debe: suma(vivos.filter((p) => !p.pagado)),
+        piezas: vivos.reduce((t, p) => t + p.lineas.reduce((s, l) => s + (l.piezas ? l.piezas[0] : 0), 0), 0) };
+    });
+  }
+
   // En qué pestaña va un pedido: cancelado; entregado y pagado, que ya no tiene nada que hacer («Entregados»); o
   // pendiente (lo demás: por hacer, hecho sin entregar, pagado por adelantado, entregado sin cobrar…)
   function seccion(p) {
@@ -601,6 +667,7 @@ const Pedidos = (() => {
     let datos = null;  // {pedidos, resumen, hoja, estados, formas, tiempos}
     let filtro = 'pendientes';
     const abiertos = new Set();  // los pedidos desplegados (por su número): siguen así al volver a pintar la lista
+    const clientesAbiertos = new Set();  // lo mismo con los clientes de «Clientes» (por clienteDe)
     const tarjetas = new Map();  // número → su tarjeta en la lista (se cambia entera al cambiar el pedido)
     const recien = new Set();  // «número:línea» impresas desde «Por imprimir»: siguen a la vista hasta cambiar de pestaña
     const notas = new Map();  // número → «Guardando en la hoja…» / «✓ Guardado»
@@ -729,13 +796,14 @@ const Pedidos = (() => {
     plan.hidden = true;
     $('lista').before(plan);
 
-    // Cuántos hay en cada filtro, en su botón (en «Por imprimir», las piezas)
+    // Cuántos hay en cada filtro, en su botón (en «Por imprimir», las piezas; en «Clientes», los clientes)
     function pintarCuentas() {
       document.querySelectorAll('[data-filtro]').forEach((b) => {
         let cuenta = b.querySelector('.cuenta');
         if (!cuenta) b.append(cuenta = el('span', 'cuenta'));
-        cuenta.textContent = String(b.dataset.filtro === 'imprimir' ? datos.resumen.por_imprimir.piezas
-          : datos.pedidos.filter(FILTROS[b.dataset.filtro]).length);
+        const f = b.dataset.filtro;
+        cuenta.textContent = String(f === 'imprimir' ? datos.resumen.por_imprimir.piezas
+          : f === 'clientes' ? clientes(datos.pedidos).length : datos.pedidos.filter(FILTROS[f]).length);
       });
     }
 
@@ -751,9 +819,19 @@ const Pedidos = (() => {
       return a;
     }
 
+    // WhatsApp sí necesita el prefijo: a uno español sin él se le pone el 34
     function waDe(telefono) {
-      const d = String(telefono || '').replace(/\D/g, '');
+      const d = cifras(telefono);
       return d.length === 9 ? `34${d}` : d;
+    }
+
+    function whatsapp(telefono) {
+      const a = el('a', 'tel', telefonoBonito(telefono));
+      a.href = `https://wa.me/${waDe(telefono)}`;
+      a.target = '_blank';
+      a.rel = 'noopener';
+      a.title = 'Escribirle por WhatsApp';
+      return a;
     }
 
     const VACIO = {
@@ -765,9 +843,10 @@ const Pedidos = (() => {
     function pintarLista() {
       tarjetas.clear();
       if (filtro === 'imprimir') { pintarCola(); return; }
+      if (filtro === 'clientes') { pintarClientes(); return; }
       const busca = normalizar($('buscar').value.trim());
       const pedidos = datos.pedidos.filter(FILTROS[filtro]).filter((p) => !busca || normalizar(
-        `${p.numero} ${p.nombre} ${p.apellidos} ${p.telefono} ${p.productos} ${p.comentario}`).includes(busca));
+        `${p.numero} ${p.nombre} ${p.apellidos} ${p.telefono} ${telefonoBonito(p.telefono)} ${p.productos} ${p.comentario}`).includes(busca));
       $('lista').replaceChildren(...(pedidos.length ? pedidos.map(tarjeta)
         : [el('p', 'vacio', !datos.pedidos.length ? 'Aún no ha llegado ningún pedido desde la web.'
           : busca ? 'Ningún pedido coincide.' : VACIO[filtro])]));
@@ -842,11 +921,7 @@ const Pedidos = (() => {
 
     // Cada pedido, plegado en una línea (número, cliente y estado): al tocarla se despliega con todo lo demás
     function tarjeta(p) {
-      const tel = el('a', 'tel', p.telefono);
-      tel.href = `https://wa.me/${waDe(p.telefono)}`;
-      tel.target = '_blank';
-      tel.rel = 'noopener';
-      tel.title = 'Escribirle por WhatsApp';
+      const tel = whatsapp(p.telefono);
       const cuando = p.fecha && !Number.isNaN(Date.parse(p.fecha)) ? fecha.format(new Date(p.fecha)) : p.fecha;
       const vivo = p.estado !== 'Cancelado';
       const lineasPedido = el('ul', '', ...p.lineas.map((l) => el('li', '',
@@ -923,6 +998,36 @@ const Pedidos = (() => {
         aplicar(p, () => { p.forma = forma.value; });
       });
       tarjetas.set(p.numero, caja);
+      return caja;
+    }
+
+    // ---- «Clientes»: los pedidos de cada persona juntos (clientes), cada cliente plegado en una línea ----
+    function pintarClientes() {
+      const busca = normalizar($('buscar').value.trim());
+      const lista = clientes(datos.pedidos).filter((c) => !busca || normalizar(`${c.nombre} ${c.telefono} ${telefonoBonito(c.telefono)} ${c.pedidos.map(
+        (p) => `${p.numero} ${p.nombre} ${p.apellidos} ${p.productos} ${p.comentario}`).join(' ')}`).includes(busca));
+      $('lista').replaceChildren(...(lista.length ? lista.map(tarjetaCliente)
+        : [el('p', 'vacio', datos.pedidos.length ? 'Ningún cliente coincide.' : 'Aún no ha llegado ningún pedido desde la web.')]));
+    }
+
+    // Plegado: el nombre, el teléfono, lo que debe y lo que le falta por imprimir, y cuántos pedidos lleva. Desplegado:
+    // su WhatsApp, lo que ha gastado y sus pedidos, del más nuevo al más antiguo, para marcarlos como en las otras pestañas
+    function tarjetaCliente(c) {
+      const n = c.pedidos.length;
+      const datosCliente = [c.telefono ? telefonoBonito(c.telefono) : null,
+        c.debe > 0 ? el('span', 'debe', `debe ${euros.format(c.debe)}`) : c.total ? el('span', 'al-dia', 'todo cobrado') : null,
+        c.piezas ? `⏱ ${piezasTexto(c.piezas)} por imprimir` : null].filter(Boolean);
+      const caja = el('details', 'cliente',
+        el('summary', 'cliente-linea',
+          el('div', 'quien-caja', el('span', 'quien', c.nombre || 'Sin nombre'),
+            el('span', 'datos-cliente', ...datosCliente.flatMap((d, i) => (i ? [' · ', d] : [d])))),
+          el('span', 'cuantos', `${n} ${n === 1 ? 'pedido' : 'pedidos'}`)),
+        el('div', 'cliente-cuerpo',
+          el('div', 'cliente-cab', el('span', 'gastado', `Ha gastado ${euros.format(c.total)}`),
+            c.telefono ? whatsapp(c.telefono) : null),
+          ...c.pedidos.map(tarjeta)));
+      caja.open = clientesAbiertos.has(c.clave);
+      caja.addEventListener('toggle', () => { if (caja.open) clientesAbiertos.add(c.clave); else clientesAbiertos.delete(c.clave); });
       return caja;
     }
 
@@ -1013,6 +1118,8 @@ const Pedidos = (() => {
       pintarResumen();
       pintarCuentas();
       if (filtro === 'imprimir') { pintarCola(); return; }
+      // En «Clientes», el cliente entero: lo que debe y lo que le falta por imprimir también cambian
+      if (filtro === 'clientes') { pintarLista(); return; }
       if (!FILTROS[filtro](p)) {
         abiertos.delete(p.numero);
         pintarLista();
@@ -1131,7 +1238,7 @@ const Pedidos = (() => {
   }
 
   return { iniciar, lineas, resumen, seccion, aviso, piezas, textoPiezas, estadoSegunPiezas, piezasSegunEstado, duracion,
-    cola, porProducto };
+    cola, porProducto, clientes, telefonoBonito };
 })();
 
 </script>
