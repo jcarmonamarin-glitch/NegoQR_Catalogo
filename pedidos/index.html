@@ -6,7 +6,7 @@
 <title>Pedidos · Catálogo</title>
 <meta name="robots" content="noindex, nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="theme-color" content="#0b1113">
+<meta name="theme-color" content="#070c33">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icono-192.png">
 <link rel="apple-touch-icon" href="icono-192.png">
@@ -17,45 +17,52 @@
   QR de la app (Pedidos → «En el móvil») y se queda en este móvil.
 -->
 <style>
-/* Lo de static/css/base.css que usa la página, con el mismo aspecto pero sin desenfoques (en el móvil van a tirones) */
+/* Lo de static/css/base.css que usa la página, con el mismo aspecto (tema «neón»: azul marino, azul eléctrico, violeta
+   y cian) pero sin desenfoques (en el móvil van a tirones) */
 :root{
-  --bg: #0b1113;
-  --panel: rgba(26, 36, 39, .86);
-  --line: rgba(190, 230, 220, .11);
-  --line-fuerte: rgba(190, 230, 220, .2);
+  --bg: #060a26;
+  --panel: rgba(20, 26, 78, .86);
+  --line: rgba(150, 170, 255, .14);
+  --line-fuerte: rgba(150, 170, 255, .26);
   --acrilico: none;
   --radio: 16px;
-  --ink: #eef3f2;
-  --ink-dim: #9fb0ad;
-  --ink-faint: #6b7b79;
-  --accent: #3ddc97;
-  --accent-dim: #2a8f66;
+  --ink: #f2f5ff;
+  --ink-dim: #aab4e0;
+  --ink-faint: #6b74a8;
+  --accent: #29e0ff;
+  --accent-rgb: 41, 224, 255;
+  --accent-dim: #1596c4;
+  --grad-boton: linear-gradient(135deg, #6ef2ff, #1fc8f5 55%, #2f9bff);
+  --sobre-acento: #04123a;
+  --bien: #3ddc97;
+  --bien-rgb: 61, 220, 151;
   --mono: ui-monospace, "SFMono-Regular", Consolas, monospace;
   --sans: system-ui, "Segoe UI", Roboto, sans-serif;
   --borde-x: max(16px, env(safe-area-inset-left), env(safe-area-inset-right));
 }
 *{ box-sizing: border-box; }
 html{ background: var(--bg); color-scheme: dark; -webkit-text-size-adjust: 100%; }
-body{ margin: 0; min-height: 100vh; color: var(--ink); background: var(--bg); font-family: var(--sans); line-height: 1.45;
-  -webkit-tap-highlight-color: transparent; }
+body{ margin: 0; min-height: 100vh; color: var(--ink); background: linear-gradient(165deg, #070c33 0%, #080b2b 45%, #120a3d 100%) fixed;
+  font-family: var(--sans); line-height: 1.45; -webkit-tap-highlight-color: transparent; }
 body::before{ content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
   background:
-    radial-gradient(60vmax 40vmax at 0% 0%, rgba(61, 220, 151, .16), transparent 70%),
-    radial-gradient(50vmax 40vmax at 100% 10%, rgba(40, 110, 224, .16), transparent 70%),
-    radial-gradient(60vmax 40vmax at 70% 100%, rgba(150, 80, 230, .12), transparent 70%); }
+    radial-gradient(60vmax 40vmax at 0% 0%, rgba(45, 95, 255, .3), transparent 70%),
+    radial-gradient(50vmax 40vmax at 100% 10%, rgba(140, 60, 255, .26), transparent 70%),
+    radial-gradient(60vmax 40vmax at 70% 100%, rgba(170, 40, 240, .22), transparent 70%); }
 a{ color: var(--accent); }
 [hidden]{ display: none !important; }
 
-input, select{ width: 100%; background: rgba(6, 10, 12, .5); border: 1px solid var(--line-fuerte); color: var(--ink);
+input, select{ width: 100%; background: rgba(4, 6, 28, .5); border: 1px solid var(--line-fuerte); color: var(--ink);
   padding: 8px 10px; border-radius: 10px; font-family: var(--sans); font-size: 16px; outline: none; }
-select option{ background: #1a2225; }
+select option{ background: #151a4a; }
 input::placeholder{ color: var(--ink-faint); }
-input:focus, select:focus{ border-color: var(--accent-dim); box-shadow: 0 0 0 3px rgba(61, 220, 151, .16); }
+input:focus, select:focus{ border-color: var(--accent-dim); box-shadow: 0 0 0 3px rgba(var(--accent-rgb), .16); }
 button{ font-family: var(--sans); font-weight: 600; font-size: 14px; border-radius: 10px; border: 1px solid transparent;
   padding: 10px 14px; cursor: pointer; touch-action: manipulation; color: var(--ink); }
 button:active:not(:disabled){ transform: translateY(1px); }
-.btn-primary{ background: linear-gradient(135deg, #52e8a6, #2fc4a0); color: #06120d; }
-.btn-primary:disabled{ background: rgba(80, 96, 94, .45); color: #7c8b88; }
+.btn-primary{ background: var(--grad-boton); color: var(--sobre-acento); font-weight: 700;
+  box-shadow: 0 8px 22px -10px rgba(var(--accent-rgb), .85); }
+.btn-primary:disabled{ background: rgba(70, 78, 130, .45); color: #7d86b5; box-shadow: none; }
 .btn-ghost{ background: rgba(255, 255, 255, .04); border-color: var(--line-fuerte); color: var(--ink); }
 .btn-link{ background: none; border: none; padding: 0; color: var(--accent); font-size: inherit; font-weight: 600; }
 .hint{ font-size: 13px; color: var(--ink-dim); margin: 6px 0 0; }
@@ -65,9 +72,15 @@ button:active:not(:disabled){ transform: translateY(1px); }
 
 /* Cabecera fija arriba: el título, cuándo se leyó y los botones (siempre a mano al bajar por la lista) */
 .cabecera{ position: sticky; top: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between; gap: 10px;
-  padding: max(10px, env(safe-area-inset-top)) var(--borde-x) 10px; background: var(--bg);
+  padding: max(10px, env(safe-area-inset-top)) var(--borde-x) 10px; background: #070c33;
   border-bottom: 1px solid var(--line); }
-.cabecera h1{ margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -.02em; line-height: 1.15; }
+/* La línea de neón bajo la cabecera, como la barra de la app */
+.cabecera::after{ content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 1px; pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(41, 224, 255, .55) 25%, rgba(61, 107, 255, .55) 55%,
+    rgba(155, 77, 255, .5) 80%, transparent); }
+.cabecera h1{ margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -.02em; line-height: 1.15;
+  background: linear-gradient(100deg, #ffffff 25%, #8eeaff 65%, #b9a2ff); -webkit-background-clip: text; background-clip: text;
+  color: transparent; }
 .cabecera .estado{ display: flex; max-width: 100%; padding: 2px 0; border: 0; border-radius: 0; background: none;
   font: 500 12px/1.4 var(--mono); color: var(--accent); text-align: left; }
 /* Lo que hace, en dos líneas como mucho («Sin conexión · copia de las 22:30» no cabe en una al lado de los botones) */
@@ -94,7 +107,7 @@ button:active:not(:disabled){ transform: translateY(1px); }
 
 .toast{ position: fixed; left: 50%; bottom: max(20px, env(safe-area-inset-bottom)); z-index: 50; width: max-content;
   max-width: calc(100vw - 32px); transform: translateX(-50%) translateY(20px); padding: 11px 16px; border-radius: 12px;
-  background: #3ddc97; color: #06120d; font-size: 14px; font-weight: 600; text-align: center; opacity: 0; pointer-events: none;
+  background: var(--grad-boton); color: var(--sobre-acento); font-size: 14px; font-weight: 600; text-align: center; opacity: 0; pointer-events: none;
   box-shadow: 0 14px 40px -12px rgba(0, 0, 0, .7); transition: opacity .18s ease, transform .18s ease; }
 .toast.show{ opacity: 1; transform: translateX(-50%) translateY(0); }
 
@@ -127,13 +140,13 @@ button:active:not(:disabled){ transform: translateY(1px); }
    ámbar latiendo mientras lee o guarda, rojo si algo ha fallado; al tocarlo, lo que ha hecho con su hora */
 .actividad-caja{ position: relative; }
 button.actividad{ display:inline-flex; align-items:center; gap: 7px; cursor: pointer; }
-.actividad-punto{ flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+.actividad-punto{ flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--bien); }
 .actividad.ocupada .actividad-punto{ background: #f5b14a; animation: latido .8s ease-in-out infinite alternate; }
 .actividad.con-error .actividad-punto{ background: #ff6b63; }
 @keyframes latido{ from{ opacity: 1; transform: scale(1); } to{ opacity: .3; transform: scale(.7); } }
 .actividad-lista{ position: absolute; z-index: 30; top: calc(100% + 6px); right: 0; width: min(400px, calc(100vw - 32px));
   max-height: 50vh; overflow-y: auto; padding: 8px 12px; border: 1px solid var(--line-fuerte); border-radius: 12px;
-  background: #11191b; box-shadow: 0 14px 40px -12px rgba(0, 0, 0, .75); font: 12px/1.5 var(--mono); text-align: left; }
+  background: #0e1238; box-shadow: 0 14px 40px -12px rgba(0, 0, 0, .75); font: 12px/1.5 var(--mono); text-align: left; }
 .actividad-lista[hidden]{ display: none; }
 .actividad-lista p{ margin: 3px 0; color: var(--ink-dim); white-space: normal; }
 .actividad-lista .hora{ margin-right: 8px; color: var(--ink-faint); }
@@ -145,26 +158,39 @@ button.actividad{ display:inline-flex; align-items:center; gap: 7px; cursor: poi
 .aviso-pedidos h2{ margin: 0 0 6px; font-size: 18px; }
 .aviso-pedidos p{ margin: 0 0 8px; max-width: 90ch; }
 
-.resumen-pedidos{ display:grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.resumen-pedidos{ position: relative; display:grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px;
+  margin-bottom: 16px; }
 .cifra{ background: var(--panel); border: 1px solid var(--line); border-radius: var(--radio); padding: 14px 16px;
   backdrop-filter: var(--acrilico); }
 .cifra .num{ font-size: 24px; font-weight: 800; letter-spacing: -0.02em; }
 .cifra .que{ font-size: 12.5px; color: var(--ink-dim); }
 .cifra.aviso .num{ color: #f5b14a; }
-.cifra.bien .num{ color: var(--accent); }
+.cifra.bien .num{ color: var(--bien); }
 .cifra.de-pedidos .num{ color: var(--pedido-texto); }
 .cifra.de-pedidos{ box-shadow: inset 0 3px 0 rgba(var(--pedido), .7); }
-.cifra.de-productos{ box-shadow: inset 0 3px 0 rgba(var(--producto), .7); }
-.cifra.lista{ grid-column: span 2; }
 .cifra.lista summary{ display:flex; justify-content: space-between; align-items:center; gap: 8px; cursor: pointer; list-style: none; }
 .cifra.lista summary::-webkit-details-marker{ display: none; }
 .cifra.lista summary::after{ content: "▾"; font-size: 12px; transition: transform .15s; }
 .cifra.lista:not([open]) summary::after{ transform: rotate(-90deg); }
-.cifra.lista ol{ margin: 6px 0 0; padding-left: 20px; font-size: 13px; }
-.cifra.lista li{ margin: 2px 0; }
-.cifra.lista li::marker{ color: var(--ink-faint); }
-.cifra.lista .nombre-producto{ font-weight: 500; }
-.cifra.lista .n{ color: var(--ink-dim); font-variant-numeric: tabular-nums; }
+/* «Lo más pedido»: un botón del tamaño de las cifras que despliega las dos listas por encima de lo de debajo, junto al
+   borde derecho del resumen (pedidos.js, masPedido) */
+.mas-pedido > summary{ display: block; height: 100%; cursor: pointer; list-style: none;
+  box-shadow: inset 0 3px 0 rgba(var(--producto), .7); }
+.mas-pedido > summary::-webkit-details-marker{ display: none; }
+.mas-pedido > summary:hover, .mas-pedido[open] > summary{ border-color: rgba(var(--producto), .55); }
+.mas-pedido > summary .que{ color: var(--producto-texto); font-weight: 600; }
+.mas-pedido > summary .que::after{ content: " ▾"; }
+.mas-pedido[open] > summary .que::after{ content: " ▴"; }
+.mas-pedido-caja{ position: absolute; z-index: 25; top: calc(100% + 8px); right: 0; width: min(640px, 100%);
+  display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 24px; padding: 14px 16px;
+  border: 1px solid var(--line-fuerte); border-radius: 14px; background: #0e1238; box-shadow: 0 18px 50px -14px rgba(0, 0, 0, .85); }
+.mas-pedido-lista h3{ margin: 0 0 6px; font-size: 12.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--ink-dim); }
+.mas-pedido-lista ol{ margin: 0; padding-left: 22px; font-size: 13px; }
+.mas-pedido-lista li{ margin: 3px 0; }
+.mas-pedido-lista li::marker{ color: var(--ink-faint); }
+.mas-pedido-lista .nombre-producto{ font-weight: 500; }
+.mas-pedido-lista .n{ color: var(--ink-dim); font-variant-numeric: tabular-nums; }
 /* La página: en el móvil y en pantallas medianas, una columna (el panel «Por imprimir», el resumen y los pedidos); en el
    ordenador, el panel a la izquierda, fijo al bajar (por debajo de la barra fija: --arriba, de pedidos.js), y el
    resumen y los pedidos a la derecha */
@@ -221,7 +247,7 @@ button.actividad{ display:inline-flex; align-items:center; gap: 7px; cursor: poi
 .pedido{ border: 1px solid var(--line); border-left: 4px solid rgba(var(--pedido), .5); border-radius: 12px;
   background: rgba(255, 255, 255, .02); }
 .pedido[open]{ border-color: rgba(var(--pedido), .35); background: rgba(var(--pedido), .04); }
-.pedido.pagado{ border-left-color: var(--accent); }
+.pedido.pagado{ border-left-color: var(--bien); }
 .pedido.por-cobrar{ border-left-color: #f5b14a; }
 .pedido.cancelado{ opacity: .55; }
 /* Plegado: una línea con el número, el cliente y el estado; al tocarla se despliega el resto (.pedido-cuerpo) */
@@ -234,7 +260,7 @@ button.actividad{ display:inline-flex; align-items:center; gap: 7px; cursor: poi
   display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .pedido-linea .etiqueta{ flex: none; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--line-fuerte);
   font-size: 12px; color: var(--ink-dim); white-space: nowrap; }
-.pedido.pagado .etiqueta{ color: var(--accent); border-color: rgba(61, 220, 151, .45); }
+.pedido.pagado .etiqueta{ color: var(--bien); border-color: rgba(var(--bien-rgb), .45); }
 .pedido.por-cobrar .etiqueta{ color: #f5b14a; border-color: rgba(245, 177, 74, .45); }
 .pedido.cancelado .etiqueta{ color: #ff8a84; border-color: rgba(255, 107, 99, .45); }
 .pedido-cuerpo{ padding: 0 14px 12px; border-top: 1px solid var(--line); }
@@ -271,28 +297,28 @@ button.actividad{ display:inline-flex; align-items:center; gap: 7px; cursor: poi
 .piezas.una button + button{ border-left: 1px solid var(--line-fuerte); }
 .piezas.una button.e0{ background: rgba(255, 255, 255, .1); color: var(--ink); }
 /* Impreso en verde claro y entregado en verde lleno: del todo hecho (el azul es de los productos) */
-.piezas.una button.e1{ background: rgba(61, 220, 151, .16); color: var(--accent); }
-.piezas.una button.e2{ background: var(--accent); color: #06120d; }
+.piezas.una button.e1{ background: rgba(var(--bien-rgb), .16); color: var(--bien); }
+.piezas.una button.e2{ background: var(--bien); color: #06120d; }
 .contador{ display:flex; align-items:center; gap: 6px; font-size: 12.5px; }
 .contador .que{ min-width: 70px; color: var(--ink-dim); }
 .contador button{ width: 30px; height: 30px; padding: 0; border-radius: 8px; border: 1px solid var(--line-fuerte);
   background: rgba(255, 255, 255, .04); color: var(--ink); font-size: 17px; line-height: 1; }
 .contador button:disabled{ opacity: .3; cursor: default; }
 .contador .cuantas{ min-width: 52px; text-align: center; font-weight: 600; font-variant-numeric: tabular-nums; }
-.contador.completo .cuantas{ color: var(--accent); }
+.contador.completo .cuantas{ color: var(--bien); }
 .pedido .comentario{ margin: 6px 0 0; font-size: 13px; color: var(--ink-dim); white-space: pre-line; }
 .pedido-acciones{ display:flex; flex-wrap:wrap; align-items:center; gap: 8px 16px; margin-top: 10px; padding-top: 10px;
   border-top: 1px solid var(--line); }
 .pedido-acciones label{ display:flex; align-items:center; gap: 6px; font-size: 13px; margin: 0; }
 .pedido-acciones select{ width: auto; padding: 5px 8px; font-size: 13px; }
-.pedido-acciones input[type=checkbox]{ width: 18px; height: 18px; accent-color: var(--accent); margin: 0; }
+.pedido-acciones input[type=checkbox]{ width: 18px; height: 18px; accent-color: var(--bien); margin: 0; }
 .pedido-acciones .guardando{ font-size: 12px; color: var(--ink-faint); }
 /* Al marcarlo pagado sin forma de pago: «¿Cómo ha pagado?» con un botón por forma */
 .pregunta-forma{ display:flex; flex-wrap:wrap; align-items:center; gap: 6px; }
 .pregunta-forma[hidden]{ display: none; }
 .pregunta-forma .que{ font-size: 13px; font-weight: 600; }
-.pregunta-forma button{ padding: 5px 12px; border-radius: 999px; border: 1px solid var(--accent); background: transparent;
-  color: var(--accent); font-size: 13px; font-weight: 600; }
+.pregunta-forma button{ padding: 5px 12px; border-radius: 999px; border: 1px solid var(--bien); background: transparent;
+  color: var(--bien); font-size: 13px; font-weight: 600; }
 .pregunta-forma button.cancelar{ border-color: var(--line-fuerte); color: var(--ink-dim); }
 
 /* «Clientes»: una fila por cliente (por su teléfono), como una lista de contactos; al tocarla, su ficha sola con sus
@@ -312,9 +338,9 @@ button.actividad{ display:inline-flex; align-items:center; gap: 7px; cursor: poi
 .chip{ padding: 2px 9px; border-radius: 999px; border: 1px solid var(--line-fuerte); font-size: 12px; color: var(--ink-dim);
   white-space: nowrap; }
 .chip.debe{ color: #f5b14a; border-color: rgba(245, 177, 74, .45); background: rgba(245, 177, 74, .08); font-weight: 650; }
-.chip.al-dia{ color: var(--accent); border-color: rgba(61, 220, 151, .45); }
+.chip.al-dia{ color: var(--bien); border-color: rgba(var(--bien-rgb), .45); }
 .chip.piezas{ color: rgb(var(--producto)); border-color: rgba(var(--producto), .4); }
-.chip.entregar{ color: #8eeabf; border-color: rgba(61, 220, 151, .35); }
+.chip.entregar{ color: #8eeabf; border-color: rgba(var(--bien-rgb), .35); }
 .cliente-fila .ir{ flex: none; font-size: 24px; line-height: 1; color: rgba(var(--cliente), .7); }
 
 .ficha-cliente{ display:flex; flex-direction: column; gap: 12px; }
@@ -332,7 +358,7 @@ button.actividad{ display:inline-flex; align-items:center; gap: 7px; cursor: poi
 .ficha-datos .num{ font-size: 17px; font-weight: 800; white-space: nowrap; }
 .ficha-datos .que{ font-size: 12px; color: var(--ink-dim); }
 .ficha-datos .aviso .num{ color: #f5b14a; }
-.ficha-datos .bien .num{ color: var(--accent); }
+.ficha-datos .bien .num{ color: var(--bien); }
 .ficha-titulo{ margin: 4px 0 -4px; font-size: 12.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
   color: rgba(var(--pedido), .85); }
 .ficha-pedidos{ display:flex; flex-direction: column; gap: 6px; }
@@ -344,7 +370,7 @@ button.actividad{ display:inline-flex; align-items:center; gap: 7px; cursor: poi
 .paso-titulo .cuenta{ font-size: 12.5px; font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--ink-dim); }
 .paso-titulo.paso-imprimir{ color: #f5b14a; }
 .paso-titulo.paso-entregar{ color: #8eeabf; }
-.paso-titulo.paso-entregado{ color: var(--accent); }
+.paso-titulo.paso-entregado{ color: var(--bien); }
 .paso-plegado > summary{ margin: 6px 0 0; cursor: pointer; list-style: none; }
 .paso-plegado > summary::-webkit-details-marker{ display: none; }
 .paso-plegado > summary::after{ content: "▾"; font-size: 12px; transition: transform .15s; }
@@ -353,18 +379,18 @@ button.actividad{ display:inline-flex; align-items:center; gap: 7px; cursor: poi
 .productos-paso{ display:flex; flex-direction: column; gap: 6px; }
 .producto-paso{ padding: 10px 14px; border: 1px solid var(--line); border-left: 4px solid rgba(var(--producto), .55);
   border-radius: 12px; background: rgba(255, 255, 255, .02); font-size: 13.5px; }
-.producto-paso.paso-entregado{ border-left-color: var(--accent); }
+.producto-paso.paso-entregado{ border-left-color: var(--bien); }
 .producto-paso.paso-entregado .linea-datos{ opacity: .8; }
-.de-pedidos{ display:flex; flex-wrap: wrap; gap: 5px; margin: 5px 0 0; }
-.de-pedidos .num-pedido{ min-width: 0; font-size: 12px; }
+.origen-pedidos{ display:flex; flex-wrap: wrap; gap: 5px; margin: 5px 0 0; }
+.origen-pedidos .num-pedido{ min-width: 0; font-size: 12px; }
 .comentario-pedido{ margin: 4px 0 0; font-size: 12.5px; font-style: italic; color: var(--ink-dim); white-space: pre-line; }
 .pasar{ display:flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .pasar button{ padding: 6px 12px; border-radius: 10px; font-size: 13px; font-weight: 650; }
-.pasar .hacer{ border: 1px solid rgba(61, 220, 151, .45); background: rgba(61, 220, 151, .12); color: var(--accent); }
-.pasar .hacer:hover{ background: rgba(61, 220, 151, .22); }
+.pasar .hacer{ border: 1px solid rgba(var(--bien-rgb), .45); background: rgba(var(--bien-rgb), .12); color: var(--bien); }
+.pasar .hacer:hover{ background: rgba(var(--bien-rgb), .22); }
 .pasar .deshacer{ border: 1px solid var(--line-fuerte); background: transparent; color: var(--ink-dim); font-size: 15px; }
-.nada-falta{ margin: 4px 0 0; padding: 12px 14px; border: 1px solid rgba(61, 220, 151, .3); border-radius: 12px;
-  background: rgba(61, 220, 151, .06); color: var(--accent); font-weight: 600; }
+.nada-falta{ margin: 4px 0 0; padding: 12px 14px; border: 1px solid rgba(var(--bien-rgb), .3); border-radius: 12px;
+  background: rgba(var(--bien-rgb), .06); color: var(--bien); font-weight: 600; }
 /* En la ficha, la línea del pedido lleva la fecha y el total (el nombre ya está arriba) y, si va a otro nombre, lo dice */
 .pedido-linea .quien.en-ficha{ display:flex; flex-direction: column; gap: 1px; font-weight: 600; }
 .quien.en-ficha .cuando{ font-variant-numeric: tabular-nums; }
@@ -382,7 +408,7 @@ button.actividad{ display:inline-flex; align-items:center; gap: 7px; cursor: poi
 /* Cada entrada es un producto que imprimir: borde azul de producto (verde, si ya está impreso) */
 .cola-item{ padding: 10px 14px; border: 1px solid var(--line); border-left: 4px solid rgba(var(--producto), .55); border-radius: 12px;
   background: rgba(255, 255, 255, .02); font-size: 13.5px; }
-.cola-item.hecho{ border-left-color: var(--accent); opacity: .65; }
+.cola-item.hecho{ border-left-color: var(--bien); opacity: .65; }
 .cola-item.no-cabe{ opacity: .6; }
 .cola-cab{ display:flex; flex-wrap:wrap; align-items:center; gap: 4px 10px; }
 .ir-pedido{ display:inline-flex; align-items:center; gap: 2px 8px; flex-wrap: wrap; padding: 0; border: 0; background: none;
@@ -390,11 +416,11 @@ button.actividad{ display:inline-flex; align-items:center; gap: 7px; cursor: poi
 .ir-pedido:hover .nombre-cliente{ text-decoration: underline; }
 .ir-pedido:hover .num-pedido{ background: rgba(var(--pedido), .26); }
 .sin-confirmar{ font-size: 12px; color: #f5b14a; }
-.marca{ margin-left: auto; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--line-fuerte); font-size: 12px;
+.cola-cab .marca{ margin-left: auto; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--line-fuerte); font-size: 12px;
   color: var(--ink-dim); white-space: nowrap; }
-.marca.cabe, .marca.hecha{ color: var(--accent); border-color: rgba(61, 220, 151, .45); }
-.marca.no{ color: var(--ink-faint); }
-.marca.sin{ color: #f5b14a; border-color: rgba(245, 177, 74, .45); }
+.cola-cab .marca.cabe, .cola-cab .marca.hecha{ color: var(--bien); border-color: rgba(var(--bien-rgb), .45); }
+.cola-cab .marca.no{ color: var(--ink-faint); }
+.cola-cab .marca.sin{ color: #f5b14a; border-color: rgba(245, 177, 74, .45); }
 .cola-que{ font-size: 14.5px; font-weight: 650; }
 .cola-que .faltan{ color: #f5b14a; font-weight: 600; }
 .cola-item .guardando{ font-size: 12px; color: var(--ink-faint); }
@@ -402,7 +428,7 @@ button.actividad{ display:inline-flex; align-items:center; gap: 7px; cursor: poi
 /* «📱 En el móvil» (static/js/pedidos-app.js): el QR con el enlace y la clave */
 .qr-movil{ width: 210px; margin: 0 auto 12px; border-radius: 12px; overflow: hidden; background: #fff; }
 .qr-movil svg{ display:block; width: 100%; height: auto; }
-.qr-estado{ color: var(--accent); }
+.qr-estado{ color: var(--bien); }
 .qr-estado:empty{ display: none; }
 
 /* ---- Pantallas estrechas: el móvil (393 px de ancho en un POCO X5 Pro) y la app en una ventana estrecha ----
@@ -413,7 +439,14 @@ button.actividad{ display:inline-flex; align-items:center; gap: 7px; cursor: poi
   .cifra{ padding: 10px 12px; border-radius: 12px; }
   .cifra .num{ font-size: 19px; }
   .cifra .que{ font-size: 12px; }
-  .cifra.lista{ grid-column: 1 / -1; }
+  /* «Lo más pedido», una fila estrecha a todo el ancho; lo desplegado, a todo el ancho y con su propio scroll */
+  .mas-pedido{ grid-column: 1 / -1; }
+  .mas-pedido > summary{ display:flex; align-items:center; gap: 10px; min-height: 46px; padding: 8px 12px; }
+  .mas-pedido > summary .num{ font-size: 18px; }
+  .mas-pedido > summary .que{ font-size: 14.5px; }
+  .mas-pedido-caja{ left: 0; width: auto; grid-template-columns: minmax(0, 1fr); max-height: 65vh; overflow-y: auto; }
+  .mas-pedido-lista ol{ font-size: 14.5px; }
+  .mas-pedido-lista li{ margin: 5px 0; }
   .columna-imprimir{ margin-bottom: 8px; }
   .cifra.lista .imprimir-lista > li{ grid-template-columns: 64px minmax(0, 1fr); }
   .imprimir-lista .foto{ width: 64px; height: 64px; }
@@ -423,7 +456,6 @@ button.actividad{ display:inline-flex; align-items:center; gap: 7px; cursor: poi
   .imprimir-lista .t{ font-size: 13px; }
   .imprimir-lista .variantes{ font-size: 14px; }
   .cifra.lista summary{ min-height: 26px; font-size: 13px; }
-  .cifra.lista ol{ font-size: 14px; }
 
   .barra-pedidos{ flex-direction: column; align-items: stretch; gap: 10px; }
   .barra-pedidos input[type=search]{ max-width: none; padding: 11px 12px; font-size: 16px; }
@@ -462,12 +494,13 @@ button.actividad{ display:inline-flex; align-items:center; gap: 7px; cursor: poi
   .pasar{ gap: 8px; }
   .pasar button{ flex: 1; min-height: 44px; font-size: 15px; }
   .pasar .deshacer{ flex: none; width: 48px; font-size: 18px; }
-  .de-pedidos .ir-pedido{ min-height: 32px; }
+  .origen-pedidos .ir-pedido{ min-height: 32px; }
   .comentario-pedido{ font-size: 13.5px; }
   .paso-titulo{ font-size: 14px; }
   .detalle{ font-size: 13.5px; }
   .muestra{ width: 13px; height: 13px; }
   .pedido .ref, .cola-item .ref, .producto-paso .ref, .panel-imprimir .ref{ margin: 5px 0 6px; padding: 7px 12px; font-size: 13.5px; }  /* para acertar con el dedo */
+  .panel-imprimir a.ref{ padding: 7px 10px; font-size: 12.5px; white-space: nowrap; }  /* en una línea, al lado de las piezas */
   .pedido .comentario{ font-size: 14px; }
   .tiempo{ font-size: 13.5px; }
   /* Las piezas, de 44 px: los tres estados ocupan la fila; los contadores, uno debajo de otro */
@@ -485,7 +518,7 @@ button.actividad{ display:inline-flex; align-items:center; gap: 7px; cursor: poi
   .plan-texto{ min-width: 0; font-size: 14px; }
   .cola-item{ padding: 10px 12px; }
   .ir-pedido{ min-height: 32px; font-size: 14px; }
-  .marca, .sin-confirmar{ font-size: 13px; }
+  .cola-cab .marca, .sin-confirmar{ font-size: 13px; }
   .cola-que{ font-size: 15.5px; }
   .cola-item .detalle{ font-size: 13.5px; }
   .cola-item .guardando{ font-size: 13px; }
@@ -500,7 +533,7 @@ button.actividad{ display:inline-flex; align-items:center; gap: 7px; cursor: poi
   .pedido-acciones .campo-forma{ grid-area: forma; }
   .pedido-acciones .campo-pagado{ grid-area: pagado; flex-direction: row; align-items: center; gap: 10px; min-height: 46px;
     padding: 0 12px; border: 1px solid var(--line-fuerte); border-radius: 10px; font-size: 15px; font-weight: 600; color: var(--ink); }
-  .pedido.pagado .campo-pagado{ color: var(--accent); border-color: rgba(61, 220, 151, .55); background: rgba(61, 220, 151, .1); }
+  .pedido.pagado .campo-pagado{ color: var(--bien); border-color: rgba(var(--bien-rgb), .55); background: rgba(var(--bien-rgb), .1); }
   .pedido-acciones select{ width: 100%; min-height: 46px; font-size: 16px; }
   .pedido-acciones input[type=checkbox]{ width: 24px; height: 24px; }
   .pedido-acciones .guardando{ grid-area: nota; font-size: 13px; }
@@ -838,9 +871,6 @@ const Pedidos = (() => {
     const diaCorto = new Intl.DateTimeFormat('es-ES', { day: 'numeric', month: 'short' });
     const diaSemana = new Intl.DateTimeFormat('es-ES', { weekday: 'long' });
     const normalizar = (t) => String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
-    // En el móvil las listas del resumen empiezan plegadas: lo primero que se quiere ver son los pedidos
-    const estrecha = matchMedia('(max-width: 600px)').matches;
-    const plegadas = {};
     const ESPERA_PIEZAS = 900;  // ms: las piezas se guardan al rato, por si se tocan varias seguidas
 
     let datos = null;  // {pedidos, resumen, hoja, estados, formas, tiempos}
@@ -875,25 +905,36 @@ const Pedidos = (() => {
     function pintarResumen() {
       const r = datos.resumen;
       const cifra = (num, que, clase = '') => el('div', `cifra ${clase}`, el('div', 'num', num), el('div', 'que', que));
-      // `nombre` pinta cada fila: los productos, con su color; los colores, con su muestra
-      const lista = (titulo, filas, nombre, clase) => {
-        const d = el('details', `cifra lista ${clase}`, el('summary', 'que', titulo),
-          filas.length ? el('ol', '', ...filas.map(([que, n]) => el('li', '', nombre(que), ' ', el('span', 'n', `× ${n}`))))
-            : el('p', 'hint', 'Aún nada.'));
-        d.open = !(titulo in plegadas ? plegadas[titulo] : estrecha);
-        d.addEventListener('toggle', () => { plegadas[titulo] = !d.open; });
-        return d;
-      };
       $('imprimir').replaceChildren(panelImprimir());
       $('resumen').replaceChildren(
         cifra(euros.format(r.pendiente), 'Pendiente de cobro', r.pendiente > 0 ? 'aviso' : ''),
         cifra(euros.format(r.entregado_sin_cobrar), 'Entregado y sin cobrar', r.entregado_sin_cobrar > 0 ? 'aviso' : ''),
         cifra(euros.format(r.cobrado), 'Cobrado', 'bien'),
         cifra(String(r.pedidos - r.cancelados), `Pedidos${r.cancelados ? ` (y ${r.cancelados} cancelados)` : ''}`, 'de-pedidos'),
-        lista('Lo más pedido', r.mas_pedidos, (n) => el('span', 'nombre-producto', n), 'de-productos'),
-        lista('Colores más pedidos', r.colores, (c) => el('span', 'color', muestra(c), c), 'de-colores'),
+        masPedido(r),
       );
     }
+
+    // «Lo más pedido» y «Colores más pedidos», en un botón que se despliega por encima de lo demás (a petición del
+    // usuario, 23/10/2026: abiertas, las listas quitaban sitio a los pedidos y los clientes). Se cierra al tocar fuera
+    let verMasPedido = false;  // sigue abierto al volver a pintar el resumen (con cada cambio)
+    function masPedido(r) {
+      // `nombre` pinta cada fila: los productos, con su color; los colores, con su muestra
+      const lista = (titulo, filas, nombre) => el('div', 'mas-pedido-lista', el('h3', '', titulo),
+        filas.length ? el('ol', '', ...filas.map(([que, n]) => el('li', '', nombre(que), ' ', el('span', 'n', `× ${n}`))))
+          : el('p', 'hint', 'Aún nada.'));
+      const d = el('details', 'mas-pedido',
+        el('summary', 'cifra', el('div', 'num', '📊'), el('div', 'que', 'Lo más pedido')),
+        el('div', 'mas-pedido-caja',
+          lista('Lo más pedido', r.mas_pedidos, (n) => el('span', 'nombre-producto', n)),
+          lista('Colores más pedidos', r.colores, (c) => el('span', 'color', muestra(c), c))));
+      d.open = verMasPedido;
+      d.addEventListener('toggle', () => { verMasPedido = d.open; });
+      return d;
+    }
+    const cerrarMasPedido = () => document.querySelectorAll('.mas-pedido[open]').forEach((d) => { d.open = false; });
+    document.addEventListener('click', (e) => { if (!e.target.closest('.mas-pedido')) cerrarMasPedido(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') cerrarMasPedido(); });
     const piezasTexto = (n) => `${n} ${n === 1 ? 'pieza' : 'piezas'}`;
 
     // El panel de arriba: lo que queda por imprimir de todos los pedidos, por producto (porProducto). Se rehace con
@@ -1342,7 +1383,7 @@ const Pedidos = (() => {
         g.detalle ? eleccion(g.detalle) : null,
         g.ref ? referencia(g.ref, g.enlace) : null,
         tiempo,
-        el('div', 'de-pedidos', ...pedidos.map((p) => {
+        el('div', 'origen-pedidos', ...pedidos.map((p) => {
           const b = el('button', 'ir-pedido', numPedido(p));
           b.type = 'button';
           b.title = 'Ver el pedido';

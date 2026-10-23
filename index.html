@@ -22,9 +22,13 @@
 :root{
   --marca: #2850E0;
   --marca-texto: #9eb0f1;  /* calculado en web.py: color-mix() no lo entienden los móviles antiguos */
+  --marca-rgb: 40, 80, 224;  /* el mismo color en r, g, b, para las transparencias (rgba(var(--marca-rgb), .3)) */
   --fondo: #0c111d; --panel: #151c2b; --panel-2: #1c2538; --linea: rgba(255, 255, 255, .08);
   --texto: #eef2f8; --tenue: #a3adbf; --suave: #6f7a8f; --ok: #22c55e; --error: #f87171;
   --sombra: 0 10px 30px rgba(0, 0, 0, .45);
+  --brillo: rgba(255, 255, 255, .07);  /* el reflejo que recorre las fotos mientras cargan */
+  --barra: rgba(12, 17, 29, .8);
+  --ease: cubic-bezier(.22, .61, .36, 1);  /* arranca rápido y frena suave: todas las animaciones */
   color-scheme: dark;
 }
 [data-tema="claro"]{
@@ -32,27 +36,54 @@
   --fondo: #f3f5f9; --panel: #fff; --panel-2: #eef1f6; --linea: rgba(15, 23, 42, .1);
   --texto: #131926; --tenue: #556072; --suave: #8892a5; --ok: #16a34a; --error: #dc2626;
   --sombra: 0 10px 30px rgba(15, 23, 42, .18);
+  --brillo: rgba(255, 255, 255, .55);
+  --barra: rgba(243, 245, 249, .82);
   color-scheme: light;
 }
 *{ box-sizing: border-box; }
 html{ -webkit-text-size-adjust: 100%; }
 body{ margin: 0; background: var(--fondo); color: var(--texto); line-height: 1.45;
   font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+/* Un resplandor del color de la marca arriba, quieto (no se repinta al bajar) */
+body::before{ content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background: radial-gradient(90% 46% at 12% -6%, rgba(var(--marca-rgb), .3), transparent 70%),
+    radial-gradient(60% 40% at 100% 0%, rgba(var(--marca-rgb), .14), transparent 70%); }
 button, input, textarea{ font: inherit; color: inherit; }
 button{ cursor: pointer; -webkit-tap-highlight-color: transparent; }
+a{ -webkit-tap-highlight-color: transparent; }
 img{ display: block; }
 .oculto{ display: none !important; }
 
 /* Portada */
-.portada{ padding: 28px 16px 14px; max-width: 1180px; margin: 0 auto; }
-.portada .raya{ width: 44px; height: 5px; border-radius: 3px; background: var(--marca); margin-bottom: 14px; }
-.portada h1{ margin: 0; font-size: clamp(30px, 8vw, 46px); line-height: 1.02; font-weight: 850; letter-spacing: -.02em; }
+.portada{ padding: 34px 16px 18px; max-width: 1180px; margin: 0 auto; }
+.portada .raya{ width: 44px; height: 5px; border-radius: 3px; background: var(--marca); margin-bottom: 14px;
+  box-shadow: 0 0 18px rgba(var(--marca-rgb), .8); }
+.portada h1{ margin: 0; font-size: clamp(32px, 8.6vw, 50px); line-height: 1.02; font-weight: 850; letter-spacing: -.025em;
+  background: linear-gradient(100deg, var(--texto) 35%, var(--marca-texto)); -webkit-background-clip: text; background-clip: text;
+  color: transparent; }
 .portada .sub{ margin: 8px 0 0; color: var(--marca-texto); font-size: 17px; font-weight: 600; }
 .portada .meta{ margin: 10px 0 0; color: var(--tenue); font-size: 13.5px; }
+/* «Descubrir deslizando»: el botón grande de la portada */
+.cta{ display: inline-flex; align-items: center; gap: 10px; height: 50px; margin-top: 18px; padding: 0 22px 0 18px; border: 0;
+  border-radius: 25px; background: linear-gradient(135deg, rgba(255, 255, 255, .24), rgba(255, 255, 255, 0) 60%), var(--marca);
+  color: #fff; font-size: 15.5px; font-weight: 750; box-shadow: 0 12px 30px -12px rgba(var(--marca-rgb), .95);
+  transition: transform .2s var(--ease), box-shadow .2s var(--ease); }
+.cta svg{ width: 22px; height: 22px; }
+.cta:active{ transform: scale(.97); }
+@media (hover: hover){ .cta:hover{ transform: translateY(-2px); box-shadow: 0 16px 36px -12px rgba(var(--marca-rgb), 1); } }
 
-/* Buscador y categorías, fijos arriba */
-.barra{ position: sticky; top: 0; z-index: 5; background: var(--fondo); border-bottom: 1px solid var(--linea); }
+/* Buscador y categorías, fijos arriba: de cristal (se ve pasar lo de debajo, desenfocado) */
+.barra{ position: sticky; top: 0; z-index: 5; background: var(--barra); border-bottom: 1px solid var(--linea);
+  -webkit-backdrop-filter: saturate(160%) blur(14px); backdrop-filter: saturate(160%) blur(14px); }
 .barra-in{ max-width: 1180px; margin: 0 auto; padding: 10px 16px 0; }
+.buscar-fila{ display: flex; gap: 8px; }
+.buscar-fila .buscar{ flex: 1; min-width: 0; }
+/* El botón de «Descubrir», siempre a mano junto al buscador */
+.boton-feed{ flex: none; width: 44px; height: 44px; border: 0; border-radius: 12px; display: grid; place-items: center;
+  background: linear-gradient(135deg, rgba(255, 255, 255, .22), rgba(255, 255, 255, 0) 60%), var(--marca); color: #fff;
+  box-shadow: 0 8px 20px -10px rgba(var(--marca-rgb), .9); transition: transform .2s var(--ease); }
+.boton-feed svg{ width: 22px; height: 22px; }
+.boton-feed:active{ transform: scale(.92); }
 .buscar{ position: relative; }
 .buscar svg{ position: absolute; left: 12px; top: 50%; width: 18px; height: 18px; transform: translateY(-50%); color: var(--suave); }
 .buscar input{ width: 100%; height: 44px; padding: 0 14px 0 40px; border-radius: 12px; border: 1px solid var(--linea);
@@ -61,22 +92,65 @@ img{ display: block; }
 .chips{ display: flex; gap: 8px; overflow-x: auto; padding: 10px 0 12px; scrollbar-width: none; }
 .chips::-webkit-scrollbar{ display: none; }
 .chip{ flex: none; height: 34px; padding: 0 14px; border-radius: 17px; border: 1px solid var(--linea); background: var(--panel);
-  color: var(--tenue); font-size: 13.5px; font-weight: 600; white-space: nowrap; }
-.chip.activo{ background: var(--marca); border-color: var(--marca); color: #fff; }
+  color: var(--tenue); font-size: 13.5px; font-weight: 600; white-space: nowrap;
+  transition: background .25s var(--ease), color .25s var(--ease), border-color .25s var(--ease), transform .15s var(--ease); }
+.chip:active{ transform: scale(.95); }
+.chip.activo{ background: var(--marca); border-color: var(--marca); color: #fff; box-shadow: 0 6px 16px -8px rgba(var(--marca-rgb), .9); }
+.chip.favoritos{ color: #ff5c7c; }
+.chip.favoritos.activo{ background: #ff4d6d; border-color: #ff4d6d; color: #fff; box-shadow: 0 6px 16px -8px rgba(255, 77, 109, .9); }
 
 /* Productos */
 main{ max-width: 1180px; margin: 0 auto; padding: 4px 16px 120px; }
-.seccion h2{ margin: 22px 0 12px; font-size: 20px; font-weight: 800; display: flex; align-items: baseline; gap: 8px; }
+.seccion-cab{ display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 24px 0 12px; }
+.seccion h2{ margin: 0; font-size: 20px; font-weight: 800; display: flex; align-items: baseline; gap: 8px; min-width: 0; }
 .seccion h2 small{ font-size: 13px; font-weight: 600; color: var(--suave); }
+/* «Deslizar»: la sección en «Descubrir» */
+.ver-feed{ flex: none; display: inline-flex; align-items: center; gap: 6px; padding: 6px 2px; border: 0; background: none;
+  color: var(--marca-texto); font-size: 13.5px; font-weight: 700; }
+.ver-feed svg{ width: 16px; height: 16px; }
 .rejilla{ display: grid; grid-template-columns: repeat(auto-fill, minmax(158px, 1fr)); gap: 12px; }
 @media (min-width: 700px){ .rejilla{ grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 16px; } }
+/* Los destacados, en el móvil, en una fila que se pasa de lado con el dedo (tarjetas más grandes) */
+@media (max-width: 699px){
+  .destacados .rejilla{ display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; margin: 0 -16px;
+    padding: 2px 16px 8px; scroll-padding: 0 16px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .destacados .rejilla::-webkit-scrollbar{ display: none; }
+  .destacados .tarjeta{ flex: 0 0 72%; scroll-snap-align: start; }
+  .destacados .tarjeta h3{ font-size: 16px; }
+}
 .tarjeta{ position: relative; display: flex; flex-direction: column; background: var(--panel); border: 1px solid var(--linea);
-  border-radius: 14px; overflow: hidden; }
+  border-radius: 16px; overflow: hidden; transition: transform .28s var(--ease), box-shadow .28s var(--ease), border-color .28s; }
+.tarjeta:active{ transform: scale(.985); }
+@media (hover: hover){
+  .tarjeta:hover{ transform: translateY(-4px); border-color: rgba(var(--marca-rgb), .45);
+    box-shadow: 0 18px 36px -18px rgba(0, 0, 0, .7), 0 0 0 1px rgba(var(--marca-rgb), .25); }
+  .tarjeta:hover .foto img{ transform: scale(1.045); }
+}
+/* Entran desde abajo, con un fundido, la primera vez que se ven al bajar (tarjetasQueEntran) */
+.tarjeta.entra{ opacity: 0; }
+.tarjeta.aparece{ animation: aparecer .55s var(--ease) both; animation-delay: var(--retraso, 0ms); }
+@keyframes aparecer{ from{ opacity: 0; transform: translateY(18px); } to{ opacity: 1; transform: none; } }
 .tarjeta .abrir{ display: block; padding: 0; border: 0; background: none; text-align: left; flex: 1; }
+/* La foto: mientras carga, un reflejo que la recorre; al llegar, aparece con un fundido */
 .foto{ position: relative; aspect-ratio: 4 / 3; background: var(--panel-2); overflow: hidden; }
-.foto img{ width: 100%; height: 100%; object-fit: cover; }
+.foto::before{ content: ""; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 30%, var(--brillo) 50%, transparent 70%);
+  background-size: 220% 100%; animation: brillo 1.4s linear infinite; }
+.foto.lista::before{ display: none; }
+@keyframes brillo{ from{ background-position: 130% 0; } to{ background-position: -130% 0; } }
+.foto img{ width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .5s var(--ease), transform .6s var(--ease); }
+.foto.lista img{ opacity: 1; }
 .foto.entera img{ object-fit: contain; }
 .foto .sin{ position: absolute; inset: 0; display: grid; place-items: center; color: var(--suave); font-size: 13px; }
+/* El corazón de favoritos, sobre la foto */
+.fav{ position: absolute; z-index: 2; top: 8px; right: 8px; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%;
+  display: grid; place-items: center; background: rgba(8, 12, 22, .42); color: #fff;
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); transition: transform .2s var(--ease), color .2s; }
+.fav svg{ width: 19px; height: 19px; }
+.fav:active{ transform: scale(.84); }
+.fav.si{ color: #ff4d6d; }
+.fav.si svg path, .accion-fav.si svg path{ fill: currentColor; }
+.latido{ animation: latido .5s var(--ease); }
+@keyframes latido{ 0%{ transform: scale(1); } 35%{ transform: scale(1.32); } 60%{ transform: scale(.92); } 100%{ transform: scale(1); } }
 .tarjeta .cuerpo{ padding: 10px 12px 12px; }
 .tarjeta h3{ margin: 0; font-size: 14.5px; line-height: 1.3; font-weight: 700;
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
@@ -93,17 +167,49 @@ main{ max-width: 1180px; margin: 0 auto; padding: 4px 16px 120px; }
 /* Barra de la cesta */
 .cesta-barra{ position: fixed; z-index: 6; left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom));
   max-width: 560px; margin: 0 auto; display: flex; align-items: center; gap: 12px; padding: 0 16px; height: 56px;
-  border: 0; border-radius: 16px; background: var(--marca); color: #fff; box-shadow: var(--sombra); font-weight: 700; font-size: 15.5px; }
+  border: 0; border-radius: 18px; background: linear-gradient(135deg, rgba(255, 255, 255, .2), rgba(255, 255, 255, 0) 55%), var(--marca);
+  color: #fff; box-shadow: 0 14px 34px -12px rgba(var(--marca-rgb), .9), var(--sombra); font-weight: 700; font-size: 15.5px;
+  animation: entrar-abajo .45s var(--ease); }
+@keyframes entrar-abajo{ from{ transform: translateY(140%); opacity: 0; } }
 .cesta-barra .cuantos{ min-width: 28px; height: 28px; padding: 0 8px; border-radius: 14px; background: rgba(255, 255, 255, .22);
   display: grid; place-items: center; font-size: 14px; }
+.cesta-barra .cuantos.salto{ animation: latido .5s var(--ease); }
 .cesta-barra .total{ margin-left: auto; }
+/* Volver arriba: aparece al bajar mucho, encima de la barra del pedido si la hay */
+.arriba{ position: fixed; z-index: 6; right: 14px; bottom: calc(16px + env(safe-area-inset-bottom)); width: 46px; height: 46px;
+  border: 1px solid var(--linea); border-radius: 50%; display: grid; place-items: center; background: var(--panel); color: var(--texto);
+  box-shadow: var(--sombra); opacity: 0; transform: translateY(16px) scale(.9); pointer-events: none;
+  transition: opacity .3s var(--ease), transform .3s var(--ease), bottom .3s var(--ease); }
+.arriba svg{ width: 22px; height: 22px; }
+.arriba.ver{ opacity: 1; transform: none; pointer-events: auto; }
+.con-cesta .arriba{ bottom: calc(80px + env(safe-area-inset-bottom)); }
 
-/* Ventanas (ficha del producto y cesta): hoja que sube desde abajo en el móvil */
-dialog{ width: 100%; max-width: 560px; max-height: 92vh; margin: auto auto 0; padding: 0; border: 0; border-radius: 20px 20px 0 0;
+/* Ventanas (ficha del producto y cesta): hoja que sube desde abajo en el móvil (y se cierra arrastrándola hacia abajo);
+   en pantallas anchas, una ventana en medio que aparece con un fundido */
+dialog{ width: 100%; max-width: 560px; max-height: 92vh; margin: auto auto 0; padding: 0; border: 0; border-radius: 22px 22px 0 0;
   background: var(--panel); color: var(--texto); box-shadow: var(--sombra); overflow: hidden; }
-@media (min-width: 700px){ dialog{ margin: auto; border-radius: 20px; max-height: 88vh; } }
+@media (min-width: 700px){ dialog{ margin: auto; border-radius: 22px; max-height: 88vh; } }
 dialog::backdrop{ background: rgba(4, 7, 14, .62); }
-.dlg{ display: flex; flex-direction: column; max-height: inherit; }
+dialog[open]{ animation: hoja-sube .4s var(--ease); }
+dialog[open]::backdrop{ animation: velo .35s ease; }
+dialog[open].cerrando{ animation: hoja-baja .24s ease-in forwards; }
+dialog[open].cerrando::backdrop{ animation: velo-fuera .24s ease-in forwards; }
+@keyframes hoja-sube{ from{ transform: translateY(100%); } }
+@keyframes hoja-baja{ to{ transform: translateY(100%); } }
+@keyframes velo{ from{ opacity: 0; } }
+@keyframes velo-fuera{ to{ opacity: 0; } }
+@media (min-width: 700px){
+  dialog[open]{ animation-name: aparecer-ventana; }
+  dialog[open].cerrando{ animation-name: desaparecer-ventana; }
+}
+@keyframes aparecer-ventana{ from{ opacity: 0; transform: translateY(20px) scale(.97); } }
+@keyframes desaparecer-ventana{ to{ opacity: 0; transform: translateY(14px) scale(.98); } }
+.dlg{ position: relative; display: flex; flex-direction: column; max-height: inherit; }
+/* El asa de arriba: se ve que la hoja se puede bajar con el dedo */
+.asa{ position: absolute; z-index: 3; top: 7px; left: 50%; width: 42px; height: 5px; margin-left: -21px; border-radius: 3px;
+  background: rgba(127, 127, 127, .55); pointer-events: none; }
+.ficha .asa{ background: rgba(255, 255, 255, .75); box-shadow: 0 1px 4px rgba(0, 0, 0, .4); }
+@media (min-width: 700px){ .asa{ display: none; } }
 .dlg-cab{ display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--linea); }
 .dlg-cab h2{ margin: 0; font-size: 18px; font-weight: 800; flex: 1; }
 .cerrar{ flex: none; width: 38px; height: 38px; border-radius: 19px; border: 0; background: var(--panel-2); font-size: 20px; line-height: 1; }
@@ -209,6 +315,133 @@ footer .legal{ margin-top: 18px; font-size: 12px; color: var(--suave); }
   transition: opacity .2s, transform .2s; pointer-events: none; max-width: calc(100% - 32px); }
 .aviso.ver{ opacity: 1; transform: translate(-50%, 0); }
 @media (prefers-reduced-motion: reduce){ .aviso{ transition: none; } }
+
+/* ---- «Descubrir»: los productos uno a uno a pantalla completa; se pasa al siguiente deslizando hacia arriba (y al
+   anterior, hacia abajo). El deslizar es el del navegador (scroll-snap): suave y con la inercia del dedo ---- */
+html.con-feed, html.con-feed body{ overflow: hidden; }
+.feed{ position: fixed; inset: 0; z-index: 15; background: #04060c; color: #fff; touch-action: manipulation;
+  transform: translateY(100%); transition: transform .45s var(--ease); }
+.feed.abierto{ transform: none; }
+.feed[hidden]{ display: none; }
+.feed-scroll{ position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; scroll-snap-type: y mandatory;
+  overscroll-behavior: contain; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.feed-scroll::-webkit-scrollbar{ display: none; }
+/* Las que no se ven no se pintan (content-visibility): con 300 productos, el móvil solo trabaja con la de delante */
+.slide{ position: relative; height: 100%; overflow: hidden; scroll-snap-align: start; scroll-snap-stop: always;
+  display: flex; justify-content: center; content-visibility: auto; }
+/* Detrás, la misma foto ampliada y desenfocada: llena la pantalla con sus colores */
+.slide-fondo{ position: absolute; inset: -60px; background: #0b0f1a center / cover no-repeat;
+  filter: blur(30px) saturate(150%) brightness(.5); transform: translateZ(0); }
+/* En columna: la foto ocupa lo que deja libre lo de abajo (nombre, descripción, comprar), así nunca queda tapada */
+.slide-marco{ position: relative; width: 100%; max-width: 560px; height: 100%; display: flex; flex-direction: column; }
+.slide-foto{ position: relative; flex: 1; min-height: 0; }
+.slide-foto-in{ position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  padding: calc(70px + env(safe-area-inset-top)) 14px 14px; }
+.slide-foto img{ max-width: 100%; max-height: 100%; width: auto; height: auto; border-radius: 20px;
+  box-shadow: 0 30px 70px -24px rgba(0, 0, 0, .9); opacity: 0; transform: scale(.94);
+  transition: opacity .55s var(--ease), transform .7s var(--ease); }
+.slide-foto img.lista{ opacity: 1; transform: none; }
+.slide.activa .slide-foto img.lista{ animation: acercar 12s ease-out forwards; }
+@keyframes acercar{ to{ transform: scale(1.06); } }
+.slide-sin{ font-size: 30px; font-weight: 850; text-align: center; opacity: .5; }
+.slide-velo{ position: absolute; left: 0; right: 0; bottom: 0; height: 50%; pointer-events: none;
+  background: linear-gradient(to top, rgba(3, 5, 12, .95) 10%, rgba(3, 5, 12, .6) 50%, rgba(3, 5, 12, 0)); }
+.slide-velo-arriba{ position: absolute; left: 0; right: 0; top: 0; height: 130px; pointer-events: none;
+  background: linear-gradient(to bottom, rgba(3, 5, 12, .6), rgba(3, 5, 12, 0)); }
+.slide-info{ position: relative; z-index: 1; flex: none; padding: 0 84px calc(22px + env(safe-area-inset-bottom)) 16px; }
+.slide-etiquetas{ display: flex; flex-wrap: wrap; gap: 6px; }
+.slide-etiqueta{ display: inline-flex; align-items: center; height: 26px; padding: 0 11px; border-radius: 13px;
+  background: rgba(255, 255, 255, .16); font-size: 12px; font-weight: 700; letter-spacing: .01em;
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+.slide-etiqueta.marca{ background: rgba(var(--marca-rgb), .55); }
+.slide-info h2{ margin: 10px 0 6px; font-size: clamp(23px, 6.6vw, 32px); line-height: 1.12; font-weight: 850;
+  letter-spacing: -.015em; text-shadow: 0 2px 18px rgba(0, 0, 0, .55); }
+.slide-desc{ margin: 0; color: rgba(255, 255, 255, .84); font-size: 14.5px; line-height: 1.42; cursor: pointer;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.slide-desc.abierta{ -webkit-line-clamp: 9; }
+.slide-colores{ display: flex; align-items: center; flex-wrap: wrap; gap: 5px; margin-top: 10px; font-size: 12.5px;
+  color: rgba(255, 255, 255, .78); }
+.slide-colores .punto{ width: 18px; height: 18px; border: 1.5px solid rgba(255, 255, 255, .75); }
+.slide-colores .que{ margin-left: 4px; }
+.slide-compra{ display: flex; align-items: center; gap: 14px; margin-top: 14px; }
+.slide-precio{ font-size: 27px; font-weight: 850; letter-spacing: -.01em; white-space: nowrap; }
+.slide-compra .mas{ flex: 1; max-width: 240px; height: 50px; padding: 0 18px; border-radius: 25px; font-size: 15.5px; font-weight: 750;
+  background: linear-gradient(135deg, rgba(255, 255, 255, .26), rgba(255, 255, 255, 0) 60%), var(--marca);
+  box-shadow: 0 12px 28px -10px rgba(var(--marca-rgb), .95); transition: transform .2s var(--ease); }
+.slide-compra .mas:active{ transform: scale(.96); }
+.slide-compra .paso{ flex: 1; max-width: 240px; justify-content: space-between; height: 50px; border: 0; border-radius: 25px;
+  background: rgba(255, 255, 255, .16); color: #fff; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+.slide-compra .paso button{ width: 50px; height: 50px; color: #fff; }
+.slide-compra .paso span{ font-size: 17px; }
+/* A la derecha, como en TikTok: me gusta, compartir y ver la ficha */
+.slide-acciones{ position: absolute; z-index: 2; right: 10px; bottom: calc(96px + env(safe-area-inset-bottom)); display: flex;
+  flex-direction: column; align-items: center; gap: 16px; }
+.accion{ display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 0; border: 0; background: none;
+  color: #fff; font-size: 11.5px; font-weight: 700; text-decoration: none; text-shadow: 0 1px 6px rgba(0, 0, 0, .7); }
+.accion .circulo{ width: 50px; height: 50px; border-radius: 50%; display: grid; place-items: center; background: rgba(255, 255, 255, .15);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); transition: transform .2s var(--ease), background .2s; }
+.accion:active .circulo{ transform: scale(.86); }
+.accion svg{ width: 26px; height: 26px; }
+.accion-fav.si{ color: #ff4d6d; }
+.accion-fav.si .circulo{ background: rgba(255, 77, 109, .2); }
+/* Lo de la diapositiva que se está viendo entra subiendo un poco, escalonado */
+.slide-info > *, .slide-acciones{ opacity: 0; transform: translateY(16px); transition: opacity .5s var(--ease), transform .5s var(--ease); }
+.slide.activa .slide-info > *, .slide.activa .slide-acciones{ opacity: 1; transform: none; }
+.slide.activa .slide-info > :nth-child(2){ transition-delay: .05s; }
+.slide.activa .slide-info > :nth-child(3){ transition-delay: .1s; }
+.slide.activa .slide-info > :nth-child(4){ transition-delay: .15s; }
+.slide.activa .slide-info > :nth-child(5){ transition-delay: .2s; }
+.slide.activa .slide-acciones{ transition-delay: .12s; }
+/* El corazón que salta al dar dos toques en la foto */
+.corazon-grande{ position: absolute; z-index: 5; width: 120px; height: 120px; margin: -60px 0 0 -60px; color: #ff4d6d;
+  pointer-events: none; filter: drop-shadow(0 10px 26px rgba(255, 77, 109, .65)); animation: estallar .85s var(--ease) forwards; }
+.corazon-grande path{ fill: currentColor; stroke: none; }
+@keyframes estallar{ 0%{ transform: scale(.2) rotate(-14deg); opacity: 0; } 22%{ transform: scale(1.18) rotate(-8deg); opacity: 1; }
+  42%{ transform: scale(.94) rotate(-8deg); } 70%{ transform: scale(1) rotate(-8deg); opacity: 1; }
+  100%{ transform: scale(1.3) translateY(-50px) rotate(-8deg); opacity: 0; } }
+/* La última: ya está todo visto */
+.slide.fin{ align-items: center; padding: 24px; text-align: center;
+  background: radial-gradient(80% 50% at 50% 40%, rgba(var(--marca-rgb), .35), transparent 70%), #04060c; }
+.fin-caja{ max-width: 340px; }
+.fin-caja .icono{ width: 74px; height: 74px; margin: 0 auto 16px; border-radius: 50%; display: grid; place-items: center;
+  background: rgba(255, 255, 255, .12); font-size: 34px; }
+.fin-caja h2{ margin: 0; font-size: 24px; font-weight: 850; }
+.fin-caja p{ margin: 8px 0 20px; color: rgba(255, 255, 255, .75); }
+.fin-caja .boton{ display: block; width: 100%; }
+.fin-caja .boton.sec{ background: rgba(255, 255, 255, .14); }
+/* Arriba: cerrar, dónde se está (categoría y «3 / 120») y el pedido; y una raya con lo que se lleva visto */
+.feed-cab{ position: absolute; z-index: 3; left: 0; right: 0; top: 0; display: flex; align-items: center; gap: 10px;
+  padding: calc(12px + env(safe-area-inset-top)) 12px 10px; pointer-events: none; }
+.feed-cab > *{ pointer-events: auto; }
+.feed-boton{ position: relative; flex: none; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; display: grid;
+  place-items: center; background: rgba(0, 0, 0, .35); color: #fff; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  transition: transform .2s var(--ease); }
+.feed-boton:active{ transform: scale(.9); }
+.feed-boton svg{ width: 22px; height: 22px; }
+.feed-boton .num{ position: absolute; top: -4px; right: -4px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px;
+  display: grid; place-items: center; background: var(--marca); font-size: 11.5px; font-weight: 800; box-shadow: 0 0 0 2px #04060c; }
+.feed-titulo{ flex: 1; min-width: 0; text-align: center; font-weight: 750; font-size: 15px; text-shadow: 0 1px 8px rgba(0, 0, 0, .7);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.feed-titulo small{ display: block; font-size: 11.5px; font-weight: 600; opacity: .75; font-variant-numeric: tabular-nums; }
+.feed-progreso{ position: absolute; z-index: 4; left: 0; top: 0; height: 3px; width: 0; border-radius: 0 2px 2px 0;
+  background: linear-gradient(90deg, var(--marca-texto), var(--marca)); box-shadow: 0 0 10px rgba(var(--marca-rgb), .9);
+  transition: width .4s var(--ease); }
+/* La primera vez: cómo se pasa al siguiente */
+.feed-pista{ position: absolute; z-index: 3; left: 50%; top: 38%; transform: translate(-50%, -50%); display: flex; flex-direction: column;
+  align-items: center; gap: 8px; padding: 16px 22px; border-radius: 20px; background: rgba(0, 0, 0, .5); font-weight: 700; text-align: center;
+  font-size: 14.5px; -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); pointer-events: none; transition: opacity .45s; }
+.feed-pista svg{ width: 36px; height: 36px; animation: pista 1.5s var(--ease) infinite; }
+.feed-pista.fuera{ opacity: 0; }
+@keyframes pista{ 0%{ transform: translateY(14px); opacity: 0; } 35%{ opacity: 1; } 100%{ transform: translateY(-16px); opacity: 0; } }
+/* Con ratón: flechas para pasar (con el dedo no hacen falta) */
+.feed-flechas{ position: absolute; z-index: 3; right: 24px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 10px; }
+@media (hover: none), (max-width: 699px){ .feed-flechas{ display: none; } }
+html.con-feed .aviso{ top: calc(72px + env(safe-area-inset-top)); bottom: auto; }
+@media (prefers-reduced-motion: reduce){
+  .feed, .slide-info > *, .slide-acciones, .slide-foto img, .feed-progreso{ transition: none !important; }
+  .slide.activa .slide-foto img.lista, .feed-pista svg, .corazon-grande, .tarjeta.aparece, dialog[open], dialog[open]::backdrop,
+  .cesta-barra, .foto::before{ animation: none !important; }
+}
 </style>
 </head>
 <body>
@@ -217,14 +450,19 @@ footer .legal{ margin-top: 18px; font-size: 12px; color: var(--suave); }
   <h1 id="titulo"></h1>
   <p class="sub" id="subtitulo"></p>
   <p class="meta" id="meta"></p>
+  <button type="button" class="cta" id="ctaFeed" data-icono="deslizar">Descubrir deslizando</button>
 </header>
 
 <div class="barra">
   <div class="barra-in">
-    <label class="buscar">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-      <input type="search" id="buscar" placeholder="Buscar productos…" autocomplete="off" aria-label="Buscar productos">
-    </label>
+    <div class="buscar-fila">
+      <label class="buscar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input type="search" id="buscar" placeholder="Buscar productos…" autocomplete="off" aria-label="Buscar productos">
+      </label>
+      <button type="button" class="boton-feed" id="botonFeed" data-icono="deslizar" aria-label="Ver los productos deslizando"
+        title="Ver los productos deslizando"></button>
+    </div>
     <nav class="chips" id="chips" aria-label="Categorías"></nav>
   </div>
 </div>
@@ -236,11 +474,29 @@ footer .legal{ margin-top: 18px; font-size: 12px; color: var(--suave); }
 <button type="button" class="cesta-barra oculto" id="cestaBarra">
   <span class="cuantos" id="cestaCuantos">0</span><span>Ver pedido</span><span class="total" id="cestaTotal"></span>
 </button>
+<button type="button" class="arriba" id="arriba" data-icono="arriba" aria-label="Volver arriba" tabindex="-1"></button>
+
+<!-- «Descubrir»: los productos a pantalla completa, uno a uno, deslizando (las diapositivas las pone el script) -->
+<div class="feed" id="feed" role="dialog" aria-modal="true" aria-label="Descubrir productos" hidden>
+  <div class="feed-scroll" id="feedScroll"></div>
+  <div class="feed-progreso" id="feedProgreso"></div>
+  <div class="feed-cab">
+    <button type="button" class="feed-boton" id="feedCerrar" data-icono="cerrar" aria-label="Cerrar"></button>
+    <div class="feed-titulo" aria-live="polite"><span id="feedTitulo"></span><small id="feedPos"></small></div>
+    <button type="button" class="feed-boton" id="feedCesta" data-icono="bolsa" aria-label="Ver tu pedido"><span class="num oculto" id="feedCestaNum"></span></button>
+  </div>
+  <div class="feed-pista oculto" id="feedPista"><span data-icono="subir"></span>Desliza hacia arriba para ver más</div>
+  <div class="feed-flechas">
+    <button type="button" class="feed-boton" id="feedAnterior" data-icono="anterior" aria-label="Anterior"></button>
+    <button type="button" class="feed-boton" id="feedSiguiente" data-icono="siguiente" aria-label="Siguiente"></button>
+  </div>
+</div>
 
 <dialog id="dlgFicha" aria-label="Producto"><div class="dlg ficha" id="ficha"></div></dialog>
 
 <dialog id="dlgCesta" aria-labelledby="cestaTitulo">
   <div class="dlg">
+    <span class="asa" aria-hidden="true"></span>
     <div class="dlg-cab"><h2 id="cestaTitulo">Tu pedido</h2><button type="button" class="cerrar" data-cerrar aria-label="Cerrar">×</button></div>
     <div class="dlg-cuerpo" id="cestaCuerpo">
       <ul class="lineas" id="lineas"></ul>
@@ -297,7 +553,25 @@ footer .legal{ margin-top: 18px; font-size: 12px; color: var(--suave); }
     filamento: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/></svg>',
     reloj: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
     wa: document.querySelector('#porWhatsapp svg').outerHTML,
+    corazon: '<svg viewBox="0 0 24 24"><path d="M12 20.5s-7.6-4.6-9.4-9.4C1.3 7.6 3.6 4 7.2 4c2 0 3.5 1.1 4.8 2.9C13.3 5.1 14.8 4 16.8 4c3.6 0 5.9 3.6 4.6 7.1-1.8 4.8-9.4 9.4-9.4 9.4Z" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linejoin="round"/></svg>',
+    deslizar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="3"/><path d="m9.5 10 2.5-2.5 2.5 2.5M9.5 14l2.5 2.5 2.5-2.5"/></svg>',
+    info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg>',
+    cerrar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>',
+    bolsa: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14l-1.2 11.2a2 2 0 0 1-2 1.8H8.2a2 2 0 0 1-2-1.8L5 8Z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/></svg>',
+    subir: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 15 6-6 6 6"/><path d="m6 20 6-6 6 6" opacity=".45"/></svg>',
+    arriba: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg>',
+    anterior: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 15 6-6 6 6"/></svg>',
+    siguiente: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>',
   };
+  // Los botones de la página con icono ([data-icono]): el icono, delante de lo que ya tengan
+  document.querySelectorAll('[data-icono]').forEach((e) => e.insertAdjacentHTML('afterbegin', ICONOS[e.dataset.icono]));
+  const conIcono = (etiqueta, clase, icono, ...hijos) => {
+    const e = el(etiqueta, clase, ...hijos);
+    e.insertAdjacentHTML('afterbegin', ICONOS[icono]);
+    return e;
+  };
+  // Quien pide menos movimiento en su móvil: sin animaciones (las ventanas se abren y cierran sin más)
+  const reducir = matchMedia('(prefers-reduced-motion: reduce)').matches;
   // Los iconos son constantes de esta página (nunca texto de los productos): por eso van por innerHTML
   function dato(icono, texto) {
     const d = el('span', 'dato');
@@ -368,10 +642,16 @@ footer .legal{ margin-top: 18px; font-size: 12px; color: var(--suave); }
     pintarCesta();
   }
 
+  // La foto (la de 480 px en la tarjeta, la de 960 en la ficha): mientras llega, un reflejo; al llegar, un fundido. Las
+  // que se ven enteras, sobre el color de su borde
   function foto(p, lado) {
     const f = el('div', `foto${p.entera ? ' entera' : ''}`);
-    if (!p.img) { f.append(el('span', 'sin', 'Sin foto')); return f; }
+    if (!p.img) { f.classList.add('lista'); f.append(el('span', 'sin', 'Sin foto')); return f; }
+    if (p.entera && p.fondo) f.style.background = p.fondo;
     const img = el('img');
+    const lista = () => f.classList.add('lista');
+    img.addEventListener('load', lista);
+    img.addEventListener('error', lista);
     img.src = `img/${p.img}-${lado}.webp`;
     img.alt = p.nombre;
     img.width = lado === 960 ? p.ancho : Math.round(p.ancho / 2);
@@ -382,16 +662,63 @@ footer .legal{ margin-top: 18px; font-size: 12px; color: var(--suave); }
     return f;
   }
 
+  // ---- Favoritos: lo que el cliente marca con el corazón (se recuerda en su navegador) ----
+  const FAVORITOS = 'catalogo-favoritos-v1';
+  let favoritos = new Set();
+  try { favoritos = new Set(JSON.parse(localStorage.getItem(FAVORITOS) || '[]').filter((id) => porId.has(id))); } catch (e) { /* nada */ }
+  function botonFavorito(id, clase, ...hijos) {
+    const b = el('button', clase, ...hijos);
+    b.type = 'button';
+    b.dataset.fav = id;
+    b.setAttribute('aria-label', `Me gusta: ${porId.get(id).nombre}`);
+    b.addEventListener('click', (ev) => { ev.stopPropagation(); alternarFavorito(id); });
+    pintarFavorito(b, favoritos.has(id));
+    return b;
+  }
+  function pintarFavorito(b, si) {
+    b.classList.toggle('si', si);
+    b.setAttribute('aria-pressed', String(si));
+  }
+  function alternarFavorito(id, si = !favoritos.has(id)) {
+    if (si === favoritos.has(id)) return;
+    if (si) favoritos.add(id); else favoritos.delete(id);
+    try { localStorage.setItem(FAVORITOS, JSON.stringify([...favoritos])); } catch (e) { /* nada */ }
+    document.querySelectorAll(`[data-fav="${id}"]`).forEach((b) => {
+      pintarFavorito(b, si);
+      if (si && !reducir) { b.classList.remove('latido'); void b.offsetWidth; b.classList.add('latido'); }
+    });
+    pintarChipFavoritos();
+    if (categoria === FAV) filtrar();
+    aviso(si ? 'Guardado en tus favoritos' : 'Quitado de tus favoritos');
+  }
+
   // ---- Lista de productos por categoría (y arriba, los destacados) ----
   let categoria = '';
   const DESTACADOS = '★';  // data-categoria de la sección de destacados
+  const FAV = '♥';  // la categoría «Favoritos» (los que tienen el corazón)
   const tarjetas = new Map();  // id → [botones de cada tarjeta suya: {mas, paso (− N +), cuenta, menos, masP}]
+  let enFeed = [];  // los mismos botones en «Descubrir»: [{id, b}] (se quitan al cerrarla)
 
-  function tarjeta(p) {
-    const abrir = el('button', 'abrir', foto(p, 480), el('div', 'cuerpo', el('h3', '', p.nombre)));
-    abrir.type = 'button';
-    abrir.addEventListener('click', () => abrirFicha(p.id));
-    const mas = el('button', 'mas', '+');
+  // El «+» suma o resta en la última línea de este producto (el mismo color); la primera vez, si hay que elegir color o
+  // escribir algo, abre la ficha
+  function sumarProducto(p, d) {
+    const l = lineasDe(p.id).pop();
+    if (!l) {
+      if (hayQueElegir(p)) { abrirFicha(p.id); return; }
+      poner({ id: p.id, colores: eleccionInicial(p), texto: '' }, 1);
+      aviso(`Añadido: ${p.nombre}`);
+      return;
+    }
+    const n = Math.min(99, l.n + d);
+    poner(l, n);
+    const que = detalleLinea(p, l);
+    if (d > 0) aviso(`Añadido: ${p.nombre}${que ? ` (${que})` : ''}`);
+    else if (!n) aviso(`Quitado: ${p.nombre}${que ? ` (${que})` : ''}`);
+    else $('aviso').classList.remove('ver');  // que no siga el «Añadido» del «+» de antes
+  }
+  // El «+» (con `texto`) y el «− N +» de un producto, en su tarjeta o en «Descubrir»
+  function botonesCompra(p, texto) {
+    const mas = el('button', 'mas', texto);
     const menosP = el('button', '', '−');
     const masP = el('button', '', '+');
     const cuenta = el('span');
@@ -400,36 +727,49 @@ footer .legal{ margin-top: 18px; font-size: 12px; color: var(--suave); }
     [mas, menosP, masP].forEach((b) => { b.type = 'button'; });
     mas.setAttribute('aria-label', hayQueElegir(p) ? `Elegir y añadir ${p.nombre}` : `Añadir ${p.nombre} al pedido`);
     masP.setAttribute('aria-label', 'Una más');
-    // El «+» de la tarjeta suma o resta en la última línea de este producto (el mismo color); la primera vez, si hay
-    // que elegir color o escribir algo, abre la ficha
-    const sumar = (d) => {
-      const l = lineasDe(p.id).pop();
-      if (!l) {
-        if (hayQueElegir(p)) { abrirFicha(p.id); return; }
-        poner({ id: p.id, colores: eleccionInicial(p), texto: '' }, 1);
-        aviso(`Añadido: ${p.nombre}`);
-        return;
-      }
-      const n = Math.min(99, l.n + d);
-      poner(l, n);
-      const que = detalleLinea(p, l);
-      if (d > 0) aviso(`Añadido: ${p.nombre}${que ? ` (${que})` : ''}`);
-      else if (!n) aviso(`Quitado: ${p.nombre}${que ? ` (${que})` : ''}`);
-      else $('aviso').classList.remove('ver');  // que no siga el «Añadido» del «+» de antes
-    };
-    mas.addEventListener('click', () => sumar(1));
-    masP.addEventListener('click', () => sumar(1));
-    menosP.addEventListener('click', () => sumar(-1));
-    const t = el('article', 'tarjeta', abrir, el('div', 'pie', el('span', 'precio', precio(p.precio)), mas, paso));
+    mas.addEventListener('click', () => sumarProducto(p, 1));
+    masP.addEventListener('click', () => sumarProducto(p, 1));
+    menosP.addEventListener('click', () => sumarProducto(p, -1));
+    return { mas, paso, cuenta, menos: menosP, masP };
+  }
+
+  function tarjeta(p) {
+    const abrir = el('button', 'abrir', foto(p, 480), el('div', 'cuerpo', el('h3', '', p.nombre)));
+    abrir.type = 'button';
+    abrir.addEventListener('click', () => abrirFicha(p.id));
+    const b = botonesCompra(p, '+');
+    const t = el('article', 'tarjeta', abrir, botonFavorito(p.id, 'fav', conIcono('span', '', 'corazon')),
+      el('div', 'pie', el('span', 'precio', precio(p.precio)), b.mas, b.paso));
     t.dataset.id = p.id;
-    tarjetas.set(p.id, [...(tarjetas.get(p.id) || []), { mas, paso, cuenta, menos: menosP, masP }]);
+    tarjetas.set(p.id, [...(tarjetas.get(p.id) || []), b]);
     pintarBoton(p.id);
+    tarjetaQueEntra(t);
     return t;
   }
+
+  // Las tarjetas entran con un fundido, subiendo un poco, la primera vez que se ven al bajar; las de una misma fila,
+  // escalonadas
+  const entrada = 'IntersectionObserver' in window && !reducir ? new IntersectionObserver((vistas) => {
+    let k = 0;
+    vistas.forEach((v) => {
+      if (!v.isIntersecting) return;
+      const t = v.target;
+      entrada.unobserve(t);
+      t.style.setProperty('--retraso', `${Math.min(k++, 5) * 55}ms`);
+      t.classList.replace('entra', 'aparece');
+      t.addEventListener('animationend', () => t.classList.remove('aparece'), { once: true });
+    });
+  }, { rootMargin: '0px 0px -4% 0px' }) : null;
+  function tarjetaQueEntra(t) {
+    if (!entrada) return;
+    t.classList.add('entra');
+    entrada.observe(t);
+  }
+
   function pintarBoton(id) {
     const n = unidadesDe(id);
     const foco = document.activeElement;
-    (tarjetas.get(id) || []).forEach((t) => {
+    [...(tarjetas.get(id) || []), ...enFeed.filter((x) => x.id === id).map((x) => x.b)].forEach((t) => {
       t.mas.classList.toggle('oculto', n > 0);
       t.paso.classList.toggle('oculto', !n);
       t.cuenta.textContent = String(n);
@@ -444,9 +784,15 @@ footer .legal{ margin-top: 18px; font-size: 12px; color: var(--suave); }
 
   function pintarProductos() {
     const seccion = (titulo, c, lista) => {
-      const s = el('section', 'seccion', el('h2', '', titulo, el('small', '', String(lista.length))),
+      // «Deslizar»: los de esta sección (los que se ven ahora) en «Descubrir»
+      const ver = conIcono('button', 'ver-feed', 'deslizar', 'Deslizar');
+      ver.type = 'button';
+      ver.setAttribute('aria-label', `Ver ${titulo} deslizando`);
+      const s = el('section', `seccion${c === DESTACADOS ? ' destacados' : ''}`,
+        el('div', 'seccion-cab', el('h2', '', titulo, el('small', '', String(lista.length))), ver),
         el('div', 'rejilla', ...lista.map(tarjeta)));
       s.dataset.categoria = c;
+      ver.addEventListener('click', () => abrirFeed(visibles(s)));
       return s;
     };
     const destacados = D.productos.filter((p) => p.destacado);
@@ -459,43 +805,67 @@ footer .legal{ margin-top: 18px; font-size: 12px; color: var(--suave); }
 
   function filtrar() {
     const busca = normalizar($('buscar').value.trim());
+    const fav = categoria === FAV;
     let algo = false;
     document.querySelectorAll('.seccion').forEach((s) => {
-      let visibles = 0;
+      let cuantos = 0;
       // Los destacados, solo en «Todo» y sin buscar (si no, saldrían dos veces)
       const destacados = s.dataset.categoria === DESTACADOS;
-      if (destacados ? !categoria && !busca : !categoria || s.dataset.categoria === categoria) {
+      if (destacados ? !categoria && !busca : !categoria || fav || s.dataset.categoria === categoria) {
         s.querySelectorAll('.tarjeta').forEach((t) => {
-          const ver = !busca || porId.get(t.dataset.id).buscar.includes(busca);
+          const ver = (!busca || porId.get(t.dataset.id).buscar.includes(busca)) && (!fav || favoritos.has(t.dataset.id));
           t.classList.toggle('oculto', !ver);
-          if (ver) visibles++;
+          if (ver) cuantos++;
         });
       }
-      s.classList.toggle('oculto', !visibles);
-      if (visibles) algo = true;
+      s.classList.toggle('oculto', !cuantos);
+      if (cuantos) algo = true;
     });
+    $('sinResultados').textContent = fav && !favoritos.size
+      ? 'Aún no tienes favoritos: toca el ♥ de un producto para guardarlo aquí.' : 'No hay productos que coincidan.';
     $('sinResultados').classList.toggle('oculto', algo);
   }
 
+  // Los productos que se ven ahora en la lista (o en una sección), en su orden y sin repetir (un destacado sale también
+  // en su categoría)
+  function visibles(dentro = document) {
+    const vistos = new Set();
+    return [...dentro.querySelectorAll('.tarjeta')].filter((t) => t.offsetParent !== null).map((t) => t.dataset.id)
+      .filter((id) => !vistos.has(id) && vistos.add(id));
+  }
+
   function pintarChips() {
-    const chip = (texto, valor) => {
-      const b = el('button', `chip${valor === categoria ? ' activo' : ''}`, texto);
+    const chip = (texto, valor, clase = '') => {
+      const b = el('button', `chip${clase}${valor === categoria ? ' activo' : ''}`, texto);
       b.type = 'button';
       b.addEventListener('click', () => {
         categoria = valor;
         document.querySelectorAll('.chip').forEach((x) => x.classList.toggle('activo', x === b));
         filtrar();
-        window.scrollTo({ top: document.querySelector('.barra').offsetTop, behavior: 'smooth' });
+        pintarChipFavoritos();
+        window.scrollTo({ top: document.querySelector('.barra').offsetTop, behavior: reducir ? 'auto' : 'smooth' });
+        b.scrollIntoView({ block: 'nearest', inline: 'center', behavior: reducir ? 'auto' : 'smooth' });
       });
       return b;
     };
-    $('chips').replaceChildren(chip('Todo', ''), ...D.categorias.map((c) => chip(c, c)));
+    const fav = chip('', FAV, ' favoritos');
+    fav.id = 'chipFavoritos';
+    $('chips').replaceChildren(chip('Todo', ''), fav, ...D.categorias.map((c) => chip(c, c)));
+    pintarChipFavoritos();
+  }
+  // «♥ Favoritos (3)»: solo si hay alguno (o si es el que está elegido)
+  function pintarChipFavoritos() {
+    const c = $('chipFavoritos');
+    if (!c) return;
+    c.textContent = `♥ Favoritos${favoritos.size ? ` (${favoritos.size})` : ''}`;
+    c.classList.toggle('oculto', !favoritos.size && categoria !== FAV);
   }
 
   // ---- Ventanas: el botón «atrás» del móvil las cierra en lugar de salir de la página ----
   function abrirDialogo(d) {
-    const otra = [...document.querySelectorAll('dialog[open]')].some((x) => x !== d);
-    document.querySelectorAll('dialog[open]').forEach((x) => { if (x !== d) x.close(); });
+    const otra = [...document.querySelectorAll('dialog[open]')].some((x) => x !== d && !x.classList.contains('cerrando'));
+    document.querySelectorAll('dialog[open]').forEach((x) => { if (x !== d) { sinCierre(x); x.close(); } });
+    sinCierre(d);
     if (d.open) return;
     d.showModal();
     // De una ventana a otra (de la cesta a la ficha y vuelta): la misma entrada del historial
@@ -504,13 +874,71 @@ footer .legal{ margin-top: 18px; font-size: 12px; color: var(--suave); }
   }
   function cerrarDialogo(d) {
     if (!d.open) return;
-    if (history.state && history.state.dialogo === d.id) history.back(); else d.close();
+    if (history.state && history.state.dialogo === d.id) history.back(); else cerrarYa(d);
   }
-  window.addEventListener('popstate', () => document.querySelectorAll('dialog[open]').forEach((d) => d.close()));
+  // Se cierra bajando (o con un fundido en pantallas anchas); sin animación si ya se ha bajado con el dedo
+  function cerrarYa(d) {
+    if (!d.open || d.classList.contains('cerrando')) return;
+    if (reducir || d.dataset.arrastrada) {
+      delete d.dataset.arrastrada;
+      d.close();
+      d.style.transform = '';
+      d.style.transition = '';
+      return;
+    }
+    d.classList.add('cerrando');
+    d.cierre = setTimeout(() => { d.classList.remove('cerrando'); d.close(); }, 230);
+  }
+  function sinCierre(d) {
+    clearTimeout(d.cierre);
+    d.classList.remove('cerrando');
+  }
+  window.addEventListener('popstate', () => document.querySelectorAll('dialog[open]').forEach(cerrarYa));
   document.querySelectorAll('dialog').forEach((d) => {
     d.addEventListener('cancel', (ev) => { ev.preventDefault(); cerrarDialogo(d); });
     d.addEventListener('click', (ev) => { if (ev.target === d || ev.target.closest('[data-cerrar]')) cerrarDialogo(d); });
+    arrastrarParaCerrar(d);
   });
+
+  // En el móvil, la hoja se baja con el dedo para cerrarla: desde arriba del todo (el asa o la foto) o desde cualquier
+  // sitio si lo de dentro ya está arriba del todo; si no se baja lo bastante, vuelve a su sitio
+  function arrastrarParaCerrar(d) {
+    let y0 = null, dy = 0, cuerpo = null;
+    d.addEventListener('touchstart', (ev) => {
+      y0 = null;
+      // (sobre el fondo oscuro de fuera, el toque es para cerrar: no se arrastra nada)
+      if (innerWidth >= 700 || ev.touches.length !== 1 || ev.target === d
+        || ev.target.closest('input, textarea, .opciones-color')) return;
+      cuerpo = d.querySelector('.dlg-cuerpo');
+      const arriba = ev.touches[0].clientY - d.getBoundingClientRect().top < 64;
+      if (!arriba && cuerpo && cuerpo.scrollTop > 0) return;
+      y0 = ev.touches[0].clientY;
+      dy = 0;
+    }, { passive: true });
+    d.addEventListener('touchmove', (ev) => {
+      if (y0 === null) return;
+      dy = ev.touches[0].clientY - y0;
+      if (dy <= 0 || (cuerpo && cuerpo.scrollTop > 0)) {  // hacia arriba: es mover lo de dentro, no la hoja
+        if (dy < -6) { y0 = null; d.style.transform = ''; }
+        return;
+      }
+      ev.preventDefault();
+      d.style.transition = 'none';
+      d.style.transform = `translateY(${dy}px)`;
+    }, { passive: false });
+    d.addEventListener('touchend', () => {
+      if (y0 === null) return;
+      y0 = null;
+      d.style.transition = 'transform .26s cubic-bezier(.22, .61, .36, 1)';
+      if (dy > Math.min(140, d.offsetHeight * .22)) {
+        d.style.transform = 'translateY(105%)';
+        d.dataset.arrastrada = '1';
+        setTimeout(() => cerrarDialogo(d), 240);
+      } else {
+        d.style.transform = '';
+      }
+    });
+  }
 
   // ---- Compartir un producto ----
   // El enlace es su página (p/<id>.html, la genera web.py al publicar): la vista previa de WhatsApp enseña su foto,
@@ -676,17 +1104,30 @@ footer .legal{ margin-top: 18px; font-size: 12px; color: var(--suave); }
     });
     pintar();
     const pie = el('div', 'dlg-pie', faltaAqui, el('div', 'comprar', el('div', 'paso', menos, n, masB), anadir), nota);
-    $('ficha').replaceChildren(el('div', 'dlg-cuerpo', f, texto), pie);
+    const asa = el('span', 'asa');
+    asa.setAttribute('aria-hidden', 'true');
+    $('ficha').replaceChildren(asa, el('div', 'dlg-cuerpo', f, texto), pie);
     $('dlgFicha').setAttribute('aria-label', p.nombre);
     abrirDialogo($('dlgFicha'));
   }
 
   // ---- Cesta y pedido ----
+  let unidadesAntes = null;
   function pintarCesta() {
     const u = unidades();
     $('cestaBarra').classList.toggle('oculto', !u);
+    document.body.classList.toggle('con-cesta', u > 0);
     $('cestaCuantos').textContent = String(u);
     $('cestaTotal').textContent = precio(totalCesta());
+    // Al añadir algo, el número salta (si ya se veía la barra: si no, la barra entra subiendo)
+    if (unidadesAntes && u > unidadesAntes && !reducir) {
+      $('cestaCuantos').classList.remove('salto');
+      void $('cestaCuantos').offsetWidth;
+      $('cestaCuantos').classList.add('salto');
+    }
+    unidadesAntes = u;
+    $('feedCestaNum').textContent = String(u);
+    $('feedCestaNum').classList.toggle('oculto', !u);
     tarjetas.forEach((_, id) => pintarBoton(id));
     if ($('dlgCesta').open) pintarLineas();
   }
@@ -842,6 +1283,217 @@ footer .legal{ margin-top: 18px; font-size: 12px; color: var(--suave); }
       boton.textContent = 'Enviar pedido';
     }
   });
+
+  // ---- «Descubrir»: los productos uno a uno a pantalla completa, deslizando con el dedo hacia arriba (el siguiente) y
+  // hacia abajo (el anterior), como en TikTok. Son los que se ven en la lista en ese momento (la categoría y la
+  // búsqueda), en su orden. Cada uno, con su foto grande sobre la misma foto desenfocada, su precio y el botón de
+  // añadirlo, y a la derecha «Me gusta», «Compartir» y «Detalles» (la ficha); dos toques en la foto, me gusta. El
+  // deslizar lo hace el navegador (scroll-snap): va suave, con la inercia del dedo, también en móviles modestos. Las
+  // fotos se piden según se acercan (la que se ve y las dos siguientes) ----
+  const feed = $('feed'), feedScroll = $('feedScroll');
+  let feedLista = [], feedActual = -1, feedFoco = null, feedCierre = 0;
+
+  function abrirFeed(ids, desde = 0) {
+    if (!ids.length) return;
+    clearTimeout(feedCierre);
+    feedLista = ids;
+    enFeed = [];
+    feedScroll.replaceChildren(...ids.map(diapositiva), finFeed());
+    feedFoco = document.activeElement;
+    feed.hidden = false;
+    document.documentElement.classList.add('con-feed');
+    feedScroll.scrollTop = Math.max(0, Math.min(desde, ids.length - 1)) * feedScroll.clientHeight;
+    feedActual = -1;
+    actualizarFeed();
+    ids.forEach((id) => pintarBoton(id));
+    // Sube desde abajo (un fotograma después de verse, para que la transición arranque)
+    requestAnimationFrame(() => requestAnimationFrame(() => feed.classList.add('abierto')));
+    if (!(history.state && history.state.feed)) history.pushState({ feed: true }, '');
+    $('feedCerrar').focus({ preventScroll: true });
+    pista();
+  }
+  // Con ✕ o Esc se vuelve atrás en el historial (popstate la cierra): así el «atrás» del móvil también la cierra
+  function cerrarFeed() {
+    if (history.state && history.state.feed) history.back(); else cerrarFeedYa();
+  }
+  function cerrarFeedYa() {
+    if (feed.hidden) return;
+    feed.classList.remove('abierto');
+    document.documentElement.classList.remove('con-feed');
+    const fin = () => { feed.hidden = true; feedScroll.replaceChildren(); enFeed = []; feedLista = []; };
+    if (reducir) fin(); else feedCierre = setTimeout(fin, 450);
+    if (feedFoco && feedFoco.isConnected) feedFoco.focus({ preventScroll: true });
+  }
+  window.addEventListener('popstate', () => { if (!feed.hidden && !(history.state && history.state.feed)) cerrarFeedYa(); });
+
+  function diapositiva(id) {
+    const p = porId.get(id);
+    const s = el('section', 'slide');
+    s.dataset.id = id;
+    const fondo = el('div', 'slide-fondo');
+    if (p.fondo) fondo.style.backgroundColor = p.fondo;
+    const dentro = el('div', 'slide-foto-in');
+    const caja = el('div', 'slide-foto', dentro);
+    if (p.img) {
+      const img = el('img');
+      img.alt = p.nombre;
+      img.width = p.ancho;
+      img.height = p.alto;
+      img.decoding = 'async';
+      img.draggable = false;
+      img.addEventListener('load', () => img.classList.add('lista'));
+      dentro.append(img);
+    } else {
+      dentro.append(el('div', 'slide-sin', p.nombre));
+    }
+    // Lo que se ve abajo: categoría, nombre, descripción (toca para leerla entera), colores y comprar
+    const etiquetas = el('div', 'slide-etiquetas', el('span', 'slide-etiqueta', p.categoria),
+      p.destacado ? el('span', 'slide-etiqueta marca', '★ Destacado') : null,
+      p.personalizar ? el('span', 'slide-etiqueta', '✎ Personalizable') : null);
+    const desc = p.descripcion ? el('p', 'slide-desc', p.descripcion) : null;
+    if (desc) desc.addEventListener('click', () => desc.classList.toggle('abierta'));
+    const colores = p.colores.length > 1 ? el('div', 'slide-colores', ...p.colores.slice(0, 10).map(punto),
+      el('span', 'que', `${p.colores.length > 10 ? `+${p.colores.length - 10} · ` : ''}${p.colores.length} colores`)) : null;
+    const b = botonesCompra(p, hayQueElegir(p) ? 'Elegir y añadir' : 'Añadir al pedido');
+    enFeed.push({ id, b });
+    const info = el('div', 'slide-info', etiquetas, el('h2', '', p.nombre), desc, colores,
+      el('div', 'slide-compra', el('span', 'slide-precio', precio(p.precio)), b.mas, b.paso));
+    // A la derecha: me gusta, compartir por WhatsApp y la ficha entera
+    const fav = botonFavorito(id, 'accion accion-fav', conIcono('span', 'circulo', 'corazon'), el('span', '', 'Me gusta'));
+    const comp = el('a', 'accion', conIcono('span', 'circulo', 'wa'), el('span', '', 'Compartir'));
+    comp.href = compartir(p).href;
+    comp.target = '_blank';
+    comp.rel = 'noopener';
+    const det = el('button', 'accion', conIcono('span', 'circulo', 'info'), el('span', '', 'Detalles'));
+    det.type = 'button';
+    det.addEventListener('click', () => abrirFicha(id));
+    const marco = el('div', 'slide-marco', caja, el('div', 'slide-velo-arriba'), el('div', 'slide-velo'), info,
+      el('div', 'slide-acciones', fav, comp, det));
+    // Dos toques en la foto: me gusta (como en TikTok, solo lo pone; quitarlo, con el botón) y un corazón que salta
+    let ultimo = 0;
+    marco.addEventListener('click', (ev) => {
+      if (ev.target.closest('button, a, .slide-desc')) return;
+      const ahora = Date.now();
+      if (ahora - ultimo > 320) { ultimo = ahora; return; }
+      ultimo = 0;
+      alternarFavorito(id, true);
+      if (reducir) return;
+      const r = marco.getBoundingClientRect();
+      const c = conIcono('span', 'corazon-grande', 'corazon');
+      c.style.left = `${ev.clientX - r.left}px`;
+      c.style.top = `${ev.clientY - r.top}px`;
+      c.addEventListener('animationend', () => c.remove(), { once: true });
+      marco.append(c);
+    });
+    s.append(fondo, marco);
+    return s;
+  }
+
+  // La última: ya se ha visto todo; volver al principio o ir al pedido
+  function finFeed() {
+    const volver = el('button', 'boton', 'Volver al principio');
+    volver.type = 'button';
+    volver.addEventListener('click', () => feedScroll.scrollTo({ top: 0, behavior: reducir ? 'auto' : 'smooth' }));
+    const pedido = el('button', 'boton sec', 'Ver mi pedido');
+    pedido.type = 'button';
+    pedido.addEventListener('click', abrirCestaDesdeFeed);
+    const s = el('section', 'slide fin', el('div', 'fin-caja', el('div', 'icono', '✓'), el('h2', '', '¡Ya lo has visto todo!'),
+      el('p', '', `${feedLista.length} ${feedLista.length === 1 ? 'producto' : 'productos'}. Si te gusta algo, añádelo y envíanos el pedido.`),
+      volver, pedido));
+    s.dataset.fin = '1';
+    return s;
+  }
+
+  // La foto de una diapositiva, cuando se acerca: la grande delante y la pequeña, desenfocada, detrás
+  function cargar(s) {
+    if (!s || s.dataset.cargada || s.dataset.fin) return;
+    s.dataset.cargada = '1';
+    const p = porId.get(s.dataset.id);
+    if (!p.img) return;
+    s.querySelector('.slide-fondo').style.backgroundImage = `url("img/${p.img}-480.webp")`;
+    s.querySelector('.slide-foto img').src = `img/${p.img}-960.webp`;
+  }
+
+  // Cuál se está viendo (al deslizar, una vez por fotograma como mucho): se marca (lo suyo entra con su animación), se
+  // cargan sus fotos y las de al lado y arriba se pone dónde se está
+  let feedPintando = false;
+  feedScroll.addEventListener('scroll', () => {
+    if (feedPintando) return;
+    feedPintando = true;
+    requestAnimationFrame(() => { feedPintando = false; actualizarFeed(); });
+  }, { passive: true });
+  function actualizarFeed() {
+    const n = feedLista.length;
+    if (!n) return;
+    const i = Math.max(0, Math.min(n, Math.round(feedScroll.scrollTop / (feedScroll.clientHeight || 1))));
+    if (i === feedActual) return;
+    const slides = feedScroll.children;
+    if (slides[feedActual]) slides[feedActual].classList.remove('activa');
+    feedActual = i;
+    slides[i].classList.add('activa');
+    for (let k = i - 1; k <= i + 2; k++) cargar(slides[k]);
+    const p = porId.get(feedLista[i]);
+    $('feedTitulo').textContent = p ? p.categoria : 'Fin';
+    $('feedPos').textContent = `${Math.min(i + 1, n)} de ${n}`;
+    $('feedProgreso').style.width = `${(Math.min(i + 1, n) / n) * 100}%`;
+    $('feedAnterior').disabled = i === 0;
+    $('feedSiguiente').disabled = i >= n;
+    if (i > 0) quitarPista();
+  }
+  const irFeed = (d) => feedScroll.scrollBy({ top: d * feedScroll.clientHeight, behavior: reducir ? 'auto' : 'smooth' });
+  // Si cambia el alto (girar el móvil, la barra del navegador): que siga en la misma
+  window.addEventListener('resize', () => {
+    if (feed.hidden || feedActual < 0) return;
+    feedScroll.scrollTop = feedActual * feedScroll.clientHeight;
+  });
+  // Con teclado: flechas (o j / k) para pasar y Esc para salir
+  document.addEventListener('keydown', (ev) => {
+    if (feed.hidden || document.querySelector('dialog[open]')) return;
+    if (ev.key === 'Escape') { ev.preventDefault(); cerrarFeed(); }
+    else if (['ArrowDown', 'PageDown', 'j'].includes(ev.key)) { ev.preventDefault(); irFeed(1); }
+    else if (['ArrowUp', 'PageUp', 'k'].includes(ev.key)) { ev.preventDefault(); irFeed(-1); }
+  });
+  $('feedCerrar').addEventListener('click', cerrarFeed);
+  $('feedAnterior').addEventListener('click', () => irFeed(-1));
+  $('feedSiguiente').addEventListener('click', () => irFeed(1));
+  function abrirCestaDesdeFeed() {
+    pintarLineas();
+    mostrarFormulario(true);
+    abrirDialogo($('dlgCesta'));
+  }
+  $('feedCesta').addEventListener('click', abrirCestaDesdeFeed);
+
+  // La primera vez, cómo se pasa: «Desliza hacia arriba» con una flecha que sube (se va al deslizar o a los 5 s)
+  const PISTA = 'catalogo-pista-descubrir';
+  function pista() {
+    let vista = false;
+    try { vista = localStorage.getItem(PISTA) === '1'; } catch (e) { /* nada */ }
+    $('feedPista').classList.toggle('oculto', vista);
+    $('feedPista').classList.remove('fuera');
+    if (!vista) setTimeout(quitarPista, 5000);
+  }
+  function quitarPista() {
+    const p = $('feedPista');
+    if (p.classList.contains('oculto') || p.classList.contains('fuera')) return;
+    p.classList.add('fuera');
+    try { localStorage.setItem(PISTA, '1'); } catch (e) { /* nada */ }
+    setTimeout(() => p.classList.add('oculto'), 450);
+  }
+
+  $('ctaFeed').addEventListener('click', () => abrirFeed(visibles()));
+  $('botonFeed').addEventListener('click', () => abrirFeed(visibles()));
+
+  // ---- Volver arriba: aparece al bajar mucho por la lista ----
+  let arribaPendiente = false;
+  window.addEventListener('scroll', () => {
+    if (arribaPendiente) return;
+    arribaPendiente = true;
+    requestAnimationFrame(() => {
+      arribaPendiente = false;
+      $('arriba').classList.toggle('ver', scrollY > 1400);
+    });
+  }, { passive: true });
+  $('arriba').addEventListener('click', () => window.scrollTo({ top: 0, behavior: reducir ? 'auto' : 'smooth' }));
 
   // ---- Aviso breve ----
   let reloj = null;
