@@ -253,11 +253,11 @@ button.actividad{ display:inline-flex; align-items:center; gap: 7px; cursor: poi
 .detalle{ display:flex; flex-wrap: wrap; align-items: center; gap: 2px 12px; margin: 2px 0; color: var(--ink-dim); font-size: 12.5px; }
 .detalle .escrito{ color: var(--ink); font-style: italic; overflow-wrap: anywhere; }
 /* El código del producto (P-037) y, si es enlace, a su modelo en Printables o a su ficha: azul de producto */
-.pedido .ref, .cola-item .ref, .panel-imprimir .ref{ display:flex; width: fit-content; margin: 3px 0 4px; padding: 2px 9px; border-radius: 999px;
+.pedido .ref, .cola-item .ref, .producto-paso .ref, .panel-imprimir .ref{ display:flex; width: fit-content; margin: 3px 0 4px; padding: 2px 9px; border-radius: 999px;
   border: 1px solid var(--line-fuerte); font: 600 12px/1.5 var(--mono); color: var(--ink-dim); text-decoration: none; }
-.pedido a.ref, .cola-item a.ref, .panel-imprimir a.ref{ color: rgb(var(--producto)); border-color: rgba(var(--producto), .45);
+.pedido a.ref, .cola-item a.ref, .producto-paso a.ref, .panel-imprimir a.ref{ color: rgb(var(--producto)); border-color: rgba(var(--producto), .45);
   background: rgba(var(--producto), .08); }
-.pedido a.ref:hover, .cola-item a.ref:hover, .panel-imprimir a.ref:hover{ background: rgba(var(--producto), .16); }
+.pedido a.ref:hover, .cola-item a.ref:hover, .producto-paso a.ref:hover, .panel-imprimir a.ref:hover{ background: rgba(var(--producto), .16); }
 /* Lo que tarda cada pieza y cuándo acabaría (tiempoLinea); en la cabecera del pedido, lo que le falta */
 .tiempo{ display:block; margin: 2px 0; font-size: 12.5px; color: var(--ink-dim); }
 .tiempo.sin{ color: var(--ink-faint); }
@@ -314,6 +314,7 @@ button.actividad{ display:inline-flex; align-items:center; gap: 7px; cursor: poi
 .chip.debe{ color: #f5b14a; border-color: rgba(245, 177, 74, .45); background: rgba(245, 177, 74, .08); font-weight: 650; }
 .chip.al-dia{ color: var(--accent); border-color: rgba(61, 220, 151, .45); }
 .chip.piezas{ color: rgb(var(--producto)); border-color: rgba(var(--producto), .4); }
+.chip.entregar{ color: #8eeabf; border-color: rgba(61, 220, 151, .35); }
 .cliente-fila .ir{ flex: none; font-size: 24px; line-height: 1; color: rgba(var(--cliente), .7); }
 
 .ficha-cliente{ display:flex; flex-direction: column; gap: 12px; }
@@ -335,6 +336,35 @@ button.actividad{ display:inline-flex; align-items:center; gap: 7px; cursor: poi
 .ficha-titulo{ margin: 4px 0 -4px; font-size: 12.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
   color: rgba(var(--pedido), .85); }
 .ficha-pedidos{ display:flex; flex-direction: column; gap: 6px; }
+/* Lo que le falta, por productos (pedidos.js, pasosCliente): «Por imprimir» en ámbar (falta), «Por entregar» en verde
+   claro (impreso) y, plegado, «Entregado» en verde; cada producto con su borde azul y los botones para pasarlo */
+.paso-titulo{ display:flex; align-items: center; gap: 8px; margin: 6px 0 -4px; font-size: 13px; font-weight: 750;
+  letter-spacing: .05em; text-transform: uppercase; }
+.paso-titulo::before{ content: ""; flex: none; width: 9px; height: 9px; border-radius: 50%; background: currentColor; }
+.paso-titulo .cuenta{ font-size: 12.5px; font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--ink-dim); }
+.paso-titulo.paso-imprimir{ color: #f5b14a; }
+.paso-titulo.paso-entregar{ color: #8eeabf; }
+.paso-titulo.paso-entregado{ color: var(--accent); }
+.paso-plegado > summary{ margin: 6px 0 0; cursor: pointer; list-style: none; }
+.paso-plegado > summary::-webkit-details-marker{ display: none; }
+.paso-plegado > summary::after{ content: "▾"; font-size: 12px; transition: transform .15s; }
+.paso-plegado:not([open]) > summary::after{ transform: rotate(-90deg); }
+.paso-plegado > .productos-paso{ margin-top: 8px; }
+.productos-paso{ display:flex; flex-direction: column; gap: 6px; }
+.producto-paso{ padding: 10px 14px; border: 1px solid var(--line); border-left: 4px solid rgba(var(--producto), .55);
+  border-radius: 12px; background: rgba(255, 255, 255, .02); font-size: 13.5px; }
+.producto-paso.paso-entregado{ border-left-color: var(--accent); }
+.producto-paso.paso-entregado .linea-datos{ opacity: .8; }
+.de-pedidos{ display:flex; flex-wrap: wrap; gap: 5px; margin: 5px 0 0; }
+.de-pedidos .num-pedido{ min-width: 0; font-size: 12px; }
+.comentario-pedido{ margin: 4px 0 0; font-size: 12.5px; font-style: italic; color: var(--ink-dim); white-space: pre-line; }
+.pasar{ display:flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.pasar button{ padding: 6px 12px; border-radius: 10px; font-size: 13px; font-weight: 650; }
+.pasar .hacer{ border: 1px solid rgba(61, 220, 151, .45); background: rgba(61, 220, 151, .12); color: var(--accent); }
+.pasar .hacer:hover{ background: rgba(61, 220, 151, .22); }
+.pasar .deshacer{ border: 1px solid var(--line-fuerte); background: transparent; color: var(--ink-dim); font-size: 15px; }
+.nada-falta{ margin: 4px 0 0; padding: 12px 14px; border: 1px solid rgba(61, 220, 151, .3); border-radius: 12px;
+  background: rgba(61, 220, 151, .06); color: var(--accent); font-weight: 600; }
 /* En la ficha, la línea del pedido lleva la fecha y el total (el nombre ya está arriba) y, si va a otro nombre, lo dice */
 .pedido-linea .quien.en-ficha{ display:flex; flex-direction: column; gap: 1px; font-weight: 600; }
 .quien.en-ficha .cuando{ font-variant-numeric: tabular-nums; }
@@ -426,10 +456,18 @@ button.actividad{ display:inline-flex; align-items:center; gap: 7px; cursor: poi
   .linea{ display: block; }
   .linea::after{ content: ""; display: block; clear: both; }
   .linea .foto{ float: left; width: 52px; height: 52px; margin: 2px 10px 6px 0; }
-  .linea .piezas{ clear: both; }
+  .linea .piezas, .linea .pasar{ clear: both; }
+  /* Los botones de pasar al siguiente paso, de 44 px y a lo ancho; el de devolver, cuadrado */
+  .producto-paso{ padding: 10px 12px; }
+  .pasar{ gap: 8px; }
+  .pasar button{ flex: 1; min-height: 44px; font-size: 15px; }
+  .pasar .deshacer{ flex: none; width: 48px; font-size: 18px; }
+  .de-pedidos .ir-pedido{ min-height: 32px; }
+  .comentario-pedido{ font-size: 13.5px; }
+  .paso-titulo{ font-size: 14px; }
   .detalle{ font-size: 13.5px; }
   .muestra{ width: 13px; height: 13px; }
-  .pedido .ref, .cola-item .ref, .panel-imprimir .ref{ margin: 5px 0 6px; padding: 7px 12px; font-size: 13.5px; }  /* para acertar con el dedo */
+  .pedido .ref, .cola-item .ref, .producto-paso .ref, .panel-imprimir .ref{ margin: 5px 0 6px; padding: 7px 12px; font-size: 13.5px; }  /* para acertar con el dedo */
   .pedido .comentario{ font-size: 14px; }
   .tiempo{ font-size: 13.5px; }
   /* Las piezas, de 44 px: los tres estados ocupan la fila; los contadores, uno debajo de otro */
@@ -703,9 +741,35 @@ const Pedidos = (() => {
     const suma = (lista) => Math.round(lista.reduce((t, p) => t + (p.total || 0), 0) * 100) / 100;
     return [...grupos.values()].map((c) => {
       const vivos = c.pedidos.filter((p) => p.estado !== 'Cancelado');
-      return { ...c, total: suma(vivos), debe: suma(vivos.filter((p) => !p.pagado)),
-        piezas: vivos.reduce((t, p) => t + p.lineas.reduce((s, l) => s + (l.piezas ? l.piezas[0] : 0), 0), 0) };
+      const contar = (i) => vivos.reduce((t, p) => t + p.lineas.reduce((s, l) => s + (l.piezas ? l.piezas[i] : 0), 0), 0);
+      return { ...c, total: suma(vivos), debe: suma(vivos.filter((p) => !p.pagado)), piezas: contar(0), entregar: contar(1) };
     });
+  }
+
+  // Lo que ha pedido un cliente por productos y no por pedidos (decisión del usuario, 23/10/2026: para ver qué le falta
+  // por hacer y por entregar): en cada paso (por imprimir, por entregar y entregado), lo mismo —producto, colores y
+  // texto— junto aunque venga de varios pedidos, con sus piezas en ese paso y las líneas de las que salen (`lineas`, del
+  // pedido más antiguo al más nuevo). Sin cancelados
+  function pasos(pedidos) {
+    const resultado = [new Map(), new Map(), new Map()];
+    for (const p of [...pedidos].sort((x, y) => (x.numero || 0) - (y.numero || 0))) {
+      if (p.estado === 'Cancelado') continue;
+      for (const l of p.lineas) {
+        (l.piezas || []).forEach((n, i) => {
+          if (!n) return;
+          const clave = `${l.ref || l.nombre.toLowerCase()}|${l.detalle}`;
+          let g = resultado[i].get(clave);
+          if (!g) {
+            resultado[i].set(clave, g = { ref: l.ref, nombre: l.nombre, detalle: l.detalle, foto: l.foto || '',
+              minutos: l.minutos || 0, enlace: '', piezas: 0, lineas: [] });
+          }
+          g.enlace = g.enlace || (l.ref && (p.enlaces || {})[l.ref]) || '';
+          g.piezas += n;
+          g.lineas.push({ pedido: p, linea: l });
+        });
+      }
+    }
+    return resultado.map((m) => [...m.values()]);
   }
 
   // En qué pestaña va un pedido: cancelado; entregado y pagado, que ya no tiene nada que hacer («Entregados»); o
@@ -1191,15 +1255,16 @@ const Pedidos = (() => {
           el('span', 'chips',
             c.debe > 0 ? el('span', 'chip debe', `debe ${euros.format(c.debe)}`)
               : c.total ? el('span', 'chip al-dia', 'todo cobrado') : null,
-            c.piezas ? el('span', 'chip piezas', `⏱ ${piezasTexto(c.piezas)}`) : null)),
+            c.piezas ? el('span', 'chip piezas', `⏱ ${c.piezas} por imprimir`) : null,
+            c.entregar ? el('span', 'chip entregar', `${c.entregar} por entregar`) : null)),
         el('span', 'ir', '›'));
       fila.type = 'button';
       fila.addEventListener('click', () => abrirCliente(c));
       return fila;
     }
 
-    // La ficha: arriba quién es, su WhatsApp y sus cuentas; debajo sus pedidos, del más nuevo al más antiguo, para
-    // marcarlos como en las otras pestañas
+    // La ficha: arriba quién es, su WhatsApp y sus cuentas; luego lo que le falta, por productos (pasosCliente), y
+    // debajo sus pedidos plegados, del más nuevo al más antiguo, para marcar el cobro como en las otras pestañas
     function fichaCliente(c) {
       const n = c.pedidos.length;
       const wa = c.telefono ? whatsapp(c.telefono) : null;
@@ -1214,8 +1279,109 @@ const Pedidos = (() => {
           dato(euros.format(c.debe), 'Debe', c.debe > 0 ? 'aviso' : 'bien'),
           dato(euros.format(c.total), 'Ha gastado'),
           dato(c.piezas ? piezasTexto(c.piezas) : '—', 'Por imprimir')),
+        ...pasosCliente(c),
         el('h3', 'ficha-titulo', `${n} ${n === 1 ? 'pedido' : 'pedidos'}`),
         el('div', 'ficha-pedidos', ...c.pedidos.map((p) => tarjeta(p, c))));
+    }
+
+    // Lo que le falta, por productos (pasos): «Por imprimir» y «Por entregar», cada producto con un botón para pasarlo
+    // al siguiente; y, plegado, lo que ya tiene. Con varias piezas, se reparten entre los pasos
+    const PASOS = [
+      { titulo: 'Por imprimir', clase: 'imprimir', hecha: 'impres', boton: 'Impreso', una: 'Una impresa' },
+      { titulo: 'Por entregar', clase: 'entregar', hecha: 'entregad', boton: 'Entregado', una: 'Una entregada' },
+      { titulo: 'Entregado', clase: 'entregado' },
+    ];
+    let verEntregado = false;  // lo entregado, plegado salvo que se despliegue (sigue así al volver a pintar)
+    function pasosCliente(c) {
+      const [imprimir, entregar, entregado] = pasos(c.pedidos);
+      const suma = (lista) => lista.reduce((t, g) => t + g.piezas, 0);
+      const minutos = imprimir.reduce((t, g) => t + g.piezas * g.minutos, 0);
+      const titulo = (paso, ...cuenta) => el('h3', `paso-titulo paso-${PASOS[paso].clase}`, PASOS[paso].titulo,
+        el('span', 'cuenta', ...cuenta));
+      const comentados = new Set();  // el comentario de cada pedido va una vez, en su primer producto
+      const lista = (grupos, paso) => el('div', 'productos-paso', ...grupos.map((g) => filaPaso(g, paso, comentados)));
+      const partes = [];
+      if (imprimir.length) {
+        partes.push(titulo(0, `${piezasTexto(suma(imprimir))}${minutos ? ` · ${duracion(minutos)}` : ''}`), lista(imprimir, 0));
+      }
+      if (entregar.length) partes.push(titulo(1, piezasTexto(suma(entregar))), lista(entregar, 1));
+      if (!imprimir.length && !entregar.length) {
+        partes.push(el('p', 'nada-falta', entregado.length ? '✓ No le falta nada: todo entregado.' : 'Aún no tiene productos.'));
+      }
+      if (entregado.length) {
+        const d = el('details', 'paso-plegado', el('summary', 'paso-titulo paso-entregado', PASOS[2].titulo,
+          el('span', 'cuenta', piezasTexto(suma(entregado)))), lista(entregado, 2));
+        d.open = verEntregado;
+        d.addEventListener('toggle', () => { verEntregado = d.open; });
+        partes.push(d);
+      }
+      return partes;
+    }
+
+    // Un producto en su paso: cuántas piezas, qué eligió, de qué pedidos es (al tocar uno, se abre abajo) y los botones:
+    // pasarlo al siguiente paso (una o todas) y, salvo en «Por imprimir», devolver una al anterior. El comentario de
+    // cada pedido, en lo que le falta y solo la primera vez (`comentados`)
+    function filaPaso(g, paso, comentados) {
+      const P = PASOS[paso];
+      const botones = [];
+      if (paso < 2) {
+        if (g.piezas > 1) botones.push(boton(`✓ ${P.una}`, () => marcarPaso(g, paso, 1, 1), 'hacer'));
+        botones.push(boton(g.piezas > 1 ? `✓ Las ${g.piezas}` : `✓ ${P.boton}`, () => marcarPaso(g, paso, 1, g.piezas), 'hacer'));
+      }
+      if (paso > 0) {
+        const atras = boton('↩', () => marcarPaso(g, paso, -1, 1), 'deshacer');
+        atras.title = `Devolver una a «${PASOS[paso - 1].titulo}»`;
+        atras.setAttribute('aria-label', atras.title);
+        botones.push(atras);
+      }
+      const pedidos = [...new Set(g.lineas.map((x) => x.pedido))];
+      const tiempo = paso === 0 && (g.minutos ? el('span', 'tiempo', `⏱ ${duracion(g.minutos)}${g.piezas > 1
+        ? ` cada pieza · las ${g.piezas}: ${duracion(g.piezas * g.minutos)}` : ''}`) : el('span', 'tiempo sin', '⏱ Sin tiempo de impresión'));
+      return el('div', `producto-paso paso-${P.clase}`, el('div', 'linea', fotoProducto(g), el('div', 'linea-datos',
+        el('div', 'linea-que', `${g.piezas} × `, el('span', 'nombre-producto', g.nombre)),
+        g.detalle ? eleccion(g.detalle) : null,
+        g.ref ? referencia(g.ref, g.enlace) : null,
+        tiempo,
+        el('div', 'de-pedidos', ...pedidos.map((p) => {
+          const b = el('button', 'ir-pedido', numPedido(p));
+          b.type = 'button';
+          b.title = 'Ver el pedido';
+          b.addEventListener('click', () => verEnFicha(p));
+          return b;
+        })),
+        // El comentario del pedido, por si dice algo de cómo hacerlo («3 unidades», «para el sábado»)
+        ...pedidos.filter((p) => p.comentario && paso < 2 && !comentados.has(p.numero)).map((p) => {
+          comentados.add(p.numero);
+          return el('p', 'comentario-pedido', `Nº ${p.numero}: «${p.comentario}»`);
+        }),
+        el('div', 'pasar', ...botones))));
+    }
+
+    // Pasa `cuantas` piezas de un paso al siguiente (`d` = 1) o al anterior (`d` = -1). Adelante, primero las del pedido
+    // más antiguo; atrás, las del más nuevo. Cada pedido se guarda por su lado (cambiarPiezas), y su estado sigue a sus
+    // piezas como siempre
+    function marcarPaso(g, paso, d, cuantas) {
+      aviso(d > 0 ? `✓ ${cuantas} × ${g.nombre}: ${PASOS[paso].hecha}${cuantas === 1 ? 'a' : 'as'}`
+        : `↩ 1 × ${g.nombre} vuelve a «${PASOS[paso - 1].titulo}»`);
+      let quedan = cuantas;
+      for (const { pedido, linea } of d > 0 ? g.lineas : [...g.lineas].reverse()) {
+        const n = Math.min(linea.piezas[paso], quedan);
+        if (!n) continue;
+        const nuevas = [...linea.piezas];
+        nuevas[paso] -= n;
+        nuevas[paso + d] += n;
+        cambiarPiezas(pedido, linea, nuevas);
+        quedan -= n;
+        if (!quedan) break;
+      }
+    }
+
+    // Desde un producto de la ficha, su pedido: abajo, desplegado
+    function verEnFicha(p) {
+      abiertos.add(p.numero);
+      pintarLista();
+      const caja = tarjetas.get(p.numero);
+      if (caja) caja.scrollIntoView({ block: 'center', behavior: 'smooth' });
     }
 
     // Abrir una ficha deja una entrada en el historial: el «atrás» del móvil vuelve a la lista, donde se estaba
@@ -1565,7 +1731,7 @@ const Pedidos = (() => {
   }
 
   return { iniciar, lineas, resumen, seccion, aviso, piezas, textoPiezas, estadoSegunPiezas, piezasSegunEstado, duracion,
-    cola, porProducto, clientes, telefonoBonito };
+    cola, porProducto, clientes, pasos, telefonoBonito };
 })();
 
 </script>
