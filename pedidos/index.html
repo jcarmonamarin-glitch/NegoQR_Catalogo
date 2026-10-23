@@ -250,23 +250,48 @@ button.actividad{ display:inline-flex; align-items:center; gap: 7px; cursor: poi
   color: var(--accent); font-size: 13px; font-weight: 600; }
 .pregunta-forma button.cancelar{ border-color: var(--line-fuerte); color: var(--ink-dim); }
 
-/* «Clientes»: una línea por cliente (por su teléfono) que se despliega con todos sus pedidos */
-.cliente{ border: 1px solid var(--line); border-radius: 12px; background: rgba(255, 255, 255, .02); }
-.cliente-linea{ display:flex; align-items:center; gap: 10px; padding: 10px 14px; cursor: pointer; list-style: none; }
-.cliente-linea::-webkit-details-marker{ display: none; }
-.cliente-linea::before{ content: "▸"; flex: none; font-size: 12px; color: var(--ink-faint); transition: transform .15s; }
-.cliente[open] > .cliente-linea::before{ transform: rotate(90deg); }
-.cliente-linea .quien-caja{ flex: 1; min-width: 0; display:flex; flex-direction: column; gap: 1px; }
-.cliente-linea .quien{ font-weight: 700; line-height: 1.25; overflow-wrap: anywhere; }
-.cliente-linea .datos-cliente{ font-size: 12.5px; color: var(--ink-dim); }
-.cliente .debe{ color: #f5b14a; font-weight: 600; }
-.cliente .al-dia{ color: var(--accent); }
-.cliente-linea .cuantos{ flex: none; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--line-fuerte);
-  font-size: 12px; color: var(--ink-dim); white-space: nowrap; }
-.cliente-cuerpo{ display:flex; flex-direction: column; gap: 6px; padding: 10px; border-top: 1px solid var(--line); }
-.cliente-cab{ display:flex; flex-wrap:wrap; align-items:center; justify-content: space-between; gap: 4px 14px; padding: 0 4px 4px; }
-.cliente-cab .gastado{ font-size: 13.5px; font-weight: 700; }
-.cliente-cab .tel{ color: var(--ink-dim); font-size: 13px; }
+/* «Clientes»: una fila por cliente (por su teléfono), como una lista de contactos; al tocarla, su ficha sola con sus
+   pedidos (pedidos.js, filaCliente y fichaCliente) */
+.avatar{ flex: none; display:grid; place-items: center; width: 42px; height: 42px; border-radius: 50%;
+  font-size: 15px; font-weight: 800; color: #fff; letter-spacing: .02em; }
+.cliente-fila{ display:flex; align-items:center; gap: 12px; width: 100%; padding: 10px 14px; border: 1px solid var(--line);
+  border-radius: 12px; background: rgba(255, 255, 255, .02); color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+.cliente-fila:hover{ background: rgba(255, 255, 255, .05); }
+.cliente-fila .quien-caja, .ficha-cab .quien-caja{ flex: 1; min-width: 0; display:flex; flex-direction: column; gap: 2px; }
+.cliente-fila .quien{ font-size: 15px; font-weight: 750; line-height: 1.25; overflow-wrap: anywhere; }
+.tel-texto{ font-size: 13px; color: var(--ink-dim); font-variant-numeric: tabular-nums; }
+.chips{ display:flex; flex-wrap: wrap; align-items: center; gap: 5px; margin-top: 4px; }
+.chips:empty{ display: none; }
+.chip{ padding: 2px 9px; border-radius: 999px; border: 1px solid var(--line-fuerte); font-size: 12px; color: var(--ink-dim);
+  white-space: nowrap; }
+.chip.debe{ color: #f5b14a; border-color: rgba(245, 177, 74, .45); background: rgba(245, 177, 74, .08); font-weight: 650; }
+.chip.al-dia{ color: var(--accent); border-color: rgba(61, 220, 151, .45); }
+.chip.piezas{ color: #a9cdff; border-color: rgba(127, 180, 255, .4); }
+.cliente-fila .ir{ flex: none; font-size: 24px; line-height: 1; color: var(--ink-faint); }
+
+.ficha-cliente{ display:flex; flex-direction: column; gap: 12px; }
+.ficha-arriba{ display:flex; align-items:center; justify-content: space-between; gap: 10px; }
+.ficha-cliente .volver{ padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line-fuerte);
+  background: transparent; color: var(--ink-dim); font-size: 13.5px; font-weight: 600; }
+.ficha-cab{ display:flex; align-items:center; gap: 12px; }
+.ficha-cab .avatar{ width: 52px; height: 52px; font-size: 18px; }
+.ficha-cab .quien{ margin: 0; font-size: 20px; line-height: 1.2; overflow-wrap: anywhere; }
+.boton-wa{ flex: none; padding: 8px 14px; border-radius: 999px; font-size: 14px; font-weight: 650; text-decoration: none;
+  color: #74e3a4; background: rgba(37, 211, 102, .12); border: 1px solid rgba(37, 211, 102, .35); white-space: nowrap; }
+.ficha-datos{ display:grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.ficha-datos .dato{ padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255, 255, 255, .02); }
+.ficha-datos .num{ font-size: 17px; font-weight: 800; white-space: nowrap; }
+.ficha-datos .que{ font-size: 12px; color: var(--ink-dim); }
+.ficha-datos .aviso .num{ color: #f5b14a; }
+.ficha-datos .bien .num{ color: var(--accent); }
+.ficha-titulo{ margin: 4px 0 -4px; font-size: 12.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--ink-faint); }
+.ficha-pedidos{ display:flex; flex-direction: column; gap: 6px; }
+/* En la ficha, la línea del pedido lleva la fecha y el total (el nombre ya está arriba) y, si va a otro nombre, lo dice */
+.pedido-linea .quien.en-ficha{ display:flex; flex-direction: column; gap: 1px; font-weight: 600; }
+.quien.en-ficha .cuando{ font-variant-numeric: tabular-nums; }
+.quien.en-ficha .cuando > span{ white-space: nowrap; }
+.quien.en-ficha .otro-nombre{ font-size: 12.5px; font-weight: 500; color: var(--ink-dim); }
 
 /* «Por imprimir»: cuántas horas hay y lo que cabe (plan-dia), y una entrada por línea con piezas que faltan */
 .plan-dia{ display:flex; flex-wrap:wrap; align-items:center; gap: 8px 16px; margin-bottom: 12px; padding: 10px 12px;
@@ -329,15 +354,21 @@ button.actividad{ display:inline-flex; align-items:center; gap: 7px; cursor: poi
   .pedido-linea .etiqueta{ font-size: 12.5px; }
   .pedido-cuerpo{ padding: 0 12px 12px; }
   .pedido-cab{ gap: 4px 10px; }
-  .pedido-cab .tel, .cliente-cab .tel{ padding: 7px 12px; border-radius: 999px; font-size: 14px; font-weight: 600;
+  .pedido-cab .tel{ padding: 7px 12px; border-radius: 999px; font-size: 14px; font-weight: 600;
     text-decoration: none; color: #74e3a4; background: rgba(37, 211, 102, .12); border: 1px solid rgba(37, 211, 102, .35); }
-  .pedido-cab .tel::before, .cliente-cab .tel::before{ content: "💬 "; }
-  .cliente-linea{ min-height: 56px; padding: 8px 12px; gap: 8px; }
-  .cliente-linea .quien{ font-size: 15.5px; }
-  .cliente-linea .datos-cliente{ font-size: 13.5px; }
-  .cliente-linea .cuantos{ font-size: 12.5px; }
-  .cliente-cuerpo{ padding: 8px 6px; }
-  .cliente-cab .gastado{ font-size: 14.5px; }
+  .pedido-cab .tel::before{ content: "💬 "; }
+  .cliente-fila{ min-height: 64px; padding: 10px 12px; gap: 10px; }
+  .cliente-fila .quien{ font-size: 16.5px; }
+  .tel-texto{ font-size: 14px; }
+  .chip{ font-size: 13px; padding: 3px 10px; }
+  .ficha-cliente .volver{ min-height: 44px; padding: 0 16px; font-size: 15px; }
+  .ficha-cab .quien{ font-size: 21px; }
+  .boton-wa{ min-height: 44px; display:inline-flex; align-items:center; font-size: 15px; }
+  .ficha-datos{ gap: 6px; }
+  .ficha-datos .dato{ padding: 8px 10px; }
+  .ficha-datos .num{ font-size: 16px; }
+  .ficha-datos .que{ font-size: 12.5px; }
+  .quien.en-ficha .otro-nombre{ font-size: 13.5px; }
   .pedido ul{ font-size: 14.5px; }
   .pedido .detalle{ font-size: 13.5px; }
   .pedido .ref, .cola-item .ref, .panel-imprimir .ref{ margin: 5px 0 6px; padding: 7px 12px; font-size: 13.5px; }  /* para acertar con el dedo */
@@ -682,6 +713,7 @@ const Pedidos = (() => {
     const euros = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' });
     const fecha = new Intl.DateTimeFormat('es-ES', { dateStyle: 'medium', timeStyle: 'short' });
     const hora = new Intl.DateTimeFormat('es-ES', { timeStyle: 'short' });
+    const diaCorto = new Intl.DateTimeFormat('es-ES', { day: 'numeric', month: 'short' });
     const diaSemana = new Intl.DateTimeFormat('es-ES', { weekday: 'long' });
     const normalizar = (t) => String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
     // En el móvil las listas del resumen empiezan plegadas: lo primero que se quiere ver son los pedidos
@@ -692,7 +724,8 @@ const Pedidos = (() => {
     let datos = null;  // {pedidos, resumen, hoja, estados, formas, tiempos}
     let filtro = 'pendientes';
     const abiertos = new Set();  // los pedidos desplegados (por su número): siguen así al volver a pintar la lista
-    const clientesAbiertos = new Set();  // lo mismo con los clientes de «Clientes» (por clienteDe)
+    let clienteVisto = null;  // en «Clientes», el cliente cuya ficha se está viendo (por clienteDe); null, la lista
+    let scrollLista = 0;  // dónde estaba la lista de clientes al abrir una ficha, para volver ahí
     const tarjetas = new Map();  // número → su tarjeta en la lista (se cambia entera al cambiar el pedido)
     const recien = new Set();  // «número:línea» impresas desde «Por imprimir»: siguen a la vista hasta cambiar de pestaña
     const notas = new Map();  // número → «Guardando en la hoja…» / «✓ Guardado»
@@ -798,13 +831,14 @@ const Pedidos = (() => {
     const NOMBRE_SECCION = { pendientes: 'Pendientes', entregados: 'Entregados', cancelados: 'Cancelados' };
     function ponerFiltro(f) {
       filtro = f;
+      clienteVisto = null;
       recien.clear();
       document.querySelectorAll('[data-filtro]').forEach((x) => x.classList.toggle('activo', x.dataset.filtro === f));
       plan.hidden = f !== 'imprimir';
       pintarLista();
     }
     document.querySelectorAll('[data-filtro]').forEach((b) => b.addEventListener('click', () => ponerFiltro(b.dataset.filtro)));
-    $('buscar').addEventListener('input', () => pintarLista());
+    $('buscar').addEventListener('input', () => { clienteVisto = null; pintarLista(); });
 
     // «Tengo 6 h para imprimir»: en «Por imprimir» marca lo que cabe (se recuerda en este navegador)
     const HORAS = 'negoqr-pedidos-horas';
@@ -872,7 +906,7 @@ const Pedidos = (() => {
       const busca = normalizar($('buscar').value.trim());
       const pedidos = datos.pedidos.filter(FILTROS[filtro]).filter((p) => !busca || normalizar(
         `${p.numero} ${p.nombre} ${p.apellidos} ${p.telefono} ${telefonoBonito(p.telefono)} ${p.productos} ${p.comentario}`).includes(busca));
-      $('lista').replaceChildren(...(pedidos.length ? pedidos.map(tarjeta)
+      $('lista').replaceChildren(...(pedidos.length ? pedidos.map((p) => tarjeta(p))
         : [el('p', 'vacio', !datos.pedidos.length ? 'Aún no ha llegado ningún pedido desde la web.'
           : busca ? 'Ningún pedido coincide.' : VACIO[filtro])]));
     }
@@ -944,10 +978,18 @@ const Pedidos = (() => {
       document.querySelectorAll(`[data-nota="${numero}"]`).forEach((s) => { s.textContent = texto; });
     }
 
-    // Cada pedido, plegado en una línea (número, cliente y estado): al tocarla se despliega con todo lo demás
-    function tarjeta(p) {
-      const tel = whatsapp(p.telefono);
-      const cuando = p.fecha && !Number.isNaN(Date.parse(p.fecha)) ? fecha.format(new Date(p.fecha)) : p.fecha;
+    // Cada pedido, plegado en una línea (número, cliente y estado): al tocarla se despliega con todo lo demás. En la
+    // ficha de un cliente (`cliente`), la línea lleva la fecha y el total en vez del nombre (ya está arriba), salvo que
+    // el pedido vaya a otro nombre, y el WhatsApp no se repite
+    function tarjeta(p, cliente = null) {
+      const tel = cliente ? null : whatsapp(p.telefono);
+      const valida = p.fecha && !Number.isNaN(Date.parse(p.fecha));
+      const cuando = valida ? fecha.format(new Date(p.fecha)) : p.fecha;
+      const nombre = `${p.nombre} ${p.apellidos}`.trim();
+      const quien = !cliente ? el('span', 'quien', nombre)
+        : el('span', 'quien en-ficha', el('span', 'cuando', el('span', '', valida ? diaCorto.format(new Date(p.fecha)) : p.fecha || ''),
+          ' ', el('span', '', `· ${euros.format(p.total)}`)), normalizar(nombre) !== normalizar(cliente.nombre)
+          ? el('span', 'otro-nombre', `a nombre de ${nombre || 'sin nombre'}`) : null);
       const vivo = p.estado !== 'Cancelado';
       const lineasPedido = el('ul', '', ...p.lineas.map((l) => el('li', '',
         l.cantidad ? `${l.cantidad} × ${l.nombre} (${euros.format(l.precio)})` : l.nombre,
@@ -981,8 +1023,7 @@ const Pedidos = (() => {
       const etiqueta = el('span', 'etiqueta', p.estado === 'Entregado' && !p.pagado ? 'Sin cobrar'
         : `${p.estado || '—'}${p.pagado && p.estado !== 'Entregado' ? ' · pagado' : ''}`);
       const caja = el('details', 'pedido',
-        el('summary', 'pedido-linea', el('span', 'num', `Nº ${p.numero}`), el('span', 'quien', `${p.nombre} ${p.apellidos}`),
-          etiqueta),
+        el('summary', 'pedido-linea', el('span', 'num', `Nº ${p.numero}`), quien, etiqueta),
         el('div', 'pedido-cuerpo',
           el('div', 'pedido-cab', el('span', 'fecha', cuando), el('span', 'total', euros.format(p.total)),
             falta ? el('span', 'falta', `⏱ Falta imprimir ${duracion(falta)}`) : null, tel),
@@ -1026,35 +1067,89 @@ const Pedidos = (() => {
       return caja;
     }
 
-    // ---- «Clientes»: los pedidos de cada persona juntos (clientes), cada cliente plegado en una línea ----
+    // ---- «Clientes»: una lista de contactos (clientes); al tocar uno, su ficha sola, con sus pedidos (decisión del
+    // usuario, 23/10/2026: desplegados en la lista no se veía de quién era cada pedido) ----
     function pintarClientes() {
+      const todos = clientes(datos.pedidos);
+      const visto = clienteVisto && todos.find((c) => c.clave === clienteVisto);
+      if (visto) { $('lista').replaceChildren(fichaCliente(visto)); return; }
+      clienteVisto = null;
       const busca = normalizar($('buscar').value.trim());
-      const lista = clientes(datos.pedidos).filter((c) => !busca || normalizar(`${c.nombre} ${c.telefono} ${telefonoBonito(c.telefono)} ${c.pedidos.map(
+      const lista = todos.filter((c) => !busca || normalizar(`${c.nombre} ${c.telefono} ${telefonoBonito(c.telefono)} ${c.pedidos.map(
         (p) => `${p.numero} ${p.nombre} ${p.apellidos} ${p.productos} ${p.comentario}`).join(' ')}`).includes(busca));
-      $('lista').replaceChildren(...(lista.length ? lista.map(tarjetaCliente)
+      $('lista').replaceChildren(...(lista.length ? lista.map(filaCliente)
         : [el('p', 'vacio', datos.pedidos.length ? 'Ningún cliente coincide.' : 'Aún no ha llegado ningún pedido desde la web.')]));
     }
 
-    // Plegado: el nombre, el teléfono, lo que debe y lo que le falta por imprimir, y cuántos pedidos lleva. Desplegado:
-    // su WhatsApp, lo que ha gastado y sus pedidos, del más nuevo al más antiguo, para marcarlos como en las otras pestañas
-    function tarjetaCliente(c) {
-      const n = c.pedidos.length;
-      const datosCliente = [c.telefono ? telefonoBonito(c.telefono) : null,
-        c.debe > 0 ? el('span', 'debe', `debe ${euros.format(c.debe)}`) : c.total ? el('span', 'al-dia', 'todo cobrado') : null,
-        c.piezas ? `⏱ ${piezasTexto(c.piezas)} por imprimir` : null].filter(Boolean);
-      const caja = el('details', 'cliente',
-        el('summary', 'cliente-linea',
-          el('div', 'quien-caja', el('span', 'quien', c.nombre || 'Sin nombre'),
-            el('span', 'datos-cliente', ...datosCliente.flatMap((d, i) => (i ? [' · ', d] : [d])))),
-          el('span', 'cuantos', `${n} ${n === 1 ? 'pedido' : 'pedidos'}`)),
-        el('div', 'cliente-cuerpo',
-          el('div', 'cliente-cab', el('span', 'gastado', `Ha gastado ${euros.format(c.total)}`),
-            c.telefono ? whatsapp(c.telefono) : null),
-          ...c.pedidos.map(tarjeta)));
-      caja.open = clientesAbiertos.has(c.clave);
-      caja.addEventListener('toggle', () => { if (caja.open) clientesAbiertos.add(c.clave); else clientesAbiertos.delete(c.clave); });
-      return caja;
+    // «MC» de «Maleni Carmona Marín», sobre un color que sale de su clave: el mismo cliente, siempre el mismo color
+    function avatar(c) {
+      const palabras = (c.nombre || '?').split(/\s+/).filter(Boolean);
+      const s = el('span', 'avatar', palabras.slice(0, 2).map((w) => w[0]).join('').toUpperCase() || '?');
+      let h = 0;
+      for (const ch of c.clave) h = (h * 31 + ch.charCodeAt(0)) % 360;
+      s.style.background = `hsl(${h}, 42%, 30%)`;
+      return s;
     }
+
+    // Una fila por cliente: quién es, su teléfono, lo que debe, lo que le falta por imprimir y cuántos pedidos lleva
+    function filaCliente(c) {
+      const n = c.pedidos.length;
+      const fila = el('button', 'cliente-fila', avatar(c),
+        el('span', 'quien-caja',
+          el('span', 'quien', c.nombre || 'Sin nombre'),
+          el('span', 'tel-texto', [c.telefono ? telefonoBonito(c.telefono) : null, `${n} ${n === 1 ? 'pedido' : 'pedidos'}`]
+            .filter(Boolean).join(' · ')),
+          el('span', 'chips',
+            c.debe > 0 ? el('span', 'chip debe', `debe ${euros.format(c.debe)}`)
+              : c.total ? el('span', 'chip al-dia', 'todo cobrado') : null,
+            c.piezas ? el('span', 'chip piezas', `⏱ ${piezasTexto(c.piezas)}`) : null)),
+        el('span', 'ir', '›'));
+      fila.type = 'button';
+      fila.addEventListener('click', () => abrirCliente(c));
+      return fila;
+    }
+
+    // La ficha: arriba quién es, su WhatsApp y sus cuentas; debajo sus pedidos, del más nuevo al más antiguo, para
+    // marcarlos como en las otras pestañas
+    function fichaCliente(c) {
+      const n = c.pedidos.length;
+      const wa = c.telefono ? whatsapp(c.telefono) : null;
+      if (wa) { wa.className = 'boton-wa'; wa.textContent = '💬 WhatsApp'; }
+      const dato = (num, que, clase = '') => el('div', `dato ${clase}`, el('div', 'num', num), el('div', 'que', que));
+      return el('section', 'ficha-cliente',
+        el('div', 'ficha-arriba', boton('← Clientes', cerrarCliente, 'volver'), wa),
+        el('div', 'ficha-cab', avatar(c),
+          el('div', 'quien-caja', el('h2', 'quien', c.nombre || 'Sin nombre'),
+            c.telefono ? el('span', 'tel-texto', telefonoBonito(c.telefono)) : null)),
+        el('div', 'ficha-datos',
+          dato(euros.format(c.debe), 'Debe', c.debe > 0 ? 'aviso' : 'bien'),
+          dato(euros.format(c.total), 'Ha gastado'),
+          dato(c.piezas ? piezasTexto(c.piezas) : '—', 'Por imprimir')),
+        el('h3', 'ficha-titulo', `${n} ${n === 1 ? 'pedido' : 'pedidos'}`),
+        el('div', 'ficha-pedidos', ...c.pedidos.map((p) => tarjeta(p, c))));
+    }
+
+    // Abrir una ficha deja una entrada en el historial: el «atrás» del móvil vuelve a la lista, donde se estaba
+    function abrirCliente(c) {
+      scrollLista = scrollY;
+      clienteVisto = c.clave;
+      history.pushState({ negoqrCliente: c.clave }, '');
+      pintarLista();
+      ponerArriba();  // la barra fija puede haber cambiado de alto desde que se midió
+      const arriba = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--arriba')) || 16;
+      scrollTo(0, Math.max(0, $('lista').getBoundingClientRect().top + scrollY - arriba));
+    }
+    function cerrarCliente() {
+      if (history.state && history.state.negoqrCliente) history.back();  // y popstate vuelve a la lista
+      else volverALista();
+    }
+    function volverALista() {
+      clienteVisto = null;
+      if (filtro !== 'clientes') return;
+      pintarLista();
+      scrollTo(0, scrollLista);
+    }
+    addEventListener('popstate', () => { if (clienteVisto) volverALista(); });
 
     // ---- «Por imprimir»: las piezas que faltan de todos los pedidos, del más antiguo al más nuevo ----
     function pintarCola() {
