@@ -41,7 +41,9 @@
   color-scheme: light;
 }
 *{ box-sizing: border-box; }
-html{ -webkit-text-size-adjust: 100%; }
+/* Sin «anclaje» del navegador: al cambiar de categoría (p. ej. de una a «Todo»), aparecen cientos de productos por
+   encima y el navegador movía la página para no perder lo que se veía; aquí se coloca ella (irAlPrincipio) */
+html{ -webkit-text-size-adjust: 100%; overflow-anchor: none; }
 body{ margin: 0; background: var(--fondo); color: var(--texto); line-height: 1.45;
   font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
 /* Un resplandor del color de la marca arriba, quieto (no se repinta al bajar) */
@@ -100,7 +102,11 @@ img{ display: block; }
 .chip.favoritos.activo{ background: #ff4d6d; border-color: #ff4d6d; color: #fff; box-shadow: 0 6px 16px -8px rgba(255, 77, 109, .9); }
 
 /* Productos */
-main{ max-width: 1180px; margin: 0 auto; padding: 4px 16px 120px; }
+/* Al menos el alto de la pantalla: con una categoría de pocos productos, su título también puede subir hasta arriba */
+main{ max-width: 1180px; margin: 0 auto; padding: 4px 16px 120px; min-height: 100vh; }
+/* Lo de la categoría elegida aparece con un fundido, subiendo un poco */
+main.cambio{ animation: cambio .38s var(--ease); }
+@keyframes cambio{ from{ opacity: 0; transform: translateY(12px); } }
 .seccion-cab{ display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 24px 0 12px; }
 .seccion h2{ margin: 0; font-size: 20px; font-weight: 800; display: flex; align-items: baseline; gap: 8px; min-width: 0; }
 .seccion h2 small{ font-size: 13px; font-weight: 600; color: var(--suave); }
@@ -317,18 +323,20 @@ footer .legal{ margin-top: 18px; font-size: 12px; color: var(--suave); }
 @media (prefers-reduced-motion: reduce){ .aviso{ transition: none; } }
 
 /* ---- «Descubrir»: los productos uno a uno a pantalla completa; se pasa al siguiente deslizando hacia arriba (y al
-   anterior, hacia abajo). El deslizar es el del navegador (scroll-snap): suave y con la inercia del dedo ---- */
+   anterior, hacia abajo). Las diapositivas van una debajo de otra en un carril que sigue al dedo y, al soltar, se
+   coloca en la siguiente o en la misma (pasarFeed): siempre de una en una, como en TikTok. Hasta el 23/10/2026 lo hacía
+   el scroll del navegador (scroll-snap), y a veces volvía a la de antes ---- */
 html.con-feed, html.con-feed body{ overflow: hidden; }
-.feed{ position: fixed; inset: 0; z-index: 15; background: #04060c; color: #fff; touch-action: manipulation;
+.feed{ position: fixed; inset: 0; z-index: 15; background: #04060c; color: #fff;
   transform: translateY(100%); transition: transform .45s var(--ease); }
 .feed.abierto{ transform: none; }
 .feed[hidden]{ display: none; }
-.feed-scroll{ position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; scroll-snap-type: y mandatory;
-  overscroll-behavior: contain; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
-.feed-scroll::-webkit-scrollbar{ display: none; }
-/* Las que no se ven no se pintan (content-visibility): con 300 productos, el móvil solo trabaja con la de delante */
-.slide{ position: relative; height: 100%; overflow: hidden; scroll-snap-align: start; scroll-snap-stop: always;
-  display: flex; justify-content: center; content-visibility: auto; }
+.feed-scroll{ position: absolute; inset: 0; overflow: hidden; touch-action: none; overscroll-behavior: contain; }
+.feed-carril{ position: absolute; inset: 0; will-change: transform; transition: transform .42s cubic-bezier(.2, .8, .25, 1); }
+.feed-carril.arrastrando, .feed-carril.sin-transicion{ transition: none; }
+/* Cada una, en su sitio del carril (translateY de su número × 100 %); las que no se ven no se pintan
+   (content-visibility): con 300 productos, el móvil solo trabaja con las de delante */
+.slide{ position: absolute; inset: 0; overflow: hidden; display: flex; justify-content: center; content-visibility: auto; }
 /* Detrás, la misma foto ampliada y desenfocada: llena la pantalla con sus colores */
 .slide-fondo{ position: absolute; inset: -60px; background: #0b0f1a center / cover no-repeat;
   filter: blur(30px) saturate(150%) brightness(.5); transform: translateZ(0); }
@@ -478,7 +486,7 @@ html.con-feed .aviso{ top: calc(72px + env(safe-area-inset-top)); bottom: auto; 
 
 <!-- «Descubrir»: los productos a pantalla completa, uno a uno, deslizando (las diapositivas las pone el script) -->
 <div class="feed" id="feed" role="dialog" aria-modal="true" aria-label="Descubrir productos" hidden>
-  <div class="feed-scroll" id="feedScroll"></div>
+  <div class="feed-scroll" id="feedScroll"><div class="feed-carril" id="feedCarril"></div></div>
   <div class="feed-progreso" id="feedProgreso"></div>
   <div class="feed-cab">
     <button type="button" class="feed-boton" id="feedCerrar" data-icono="cerrar" aria-label="Cerrar"></button>
@@ -843,8 +851,10 @@ html.con-feed .aviso{ top: calc(72px + env(safe-area-inset-top)); bottom: auto; 
         document.querySelectorAll('.chip').forEach((x) => x.classList.toggle('activo', x === b));
         filtrar();
         pintarChipFavoritos();
-        window.scrollTo({ top: document.querySelector('.barra').offsetTop, behavior: reducir ? 'auto' : 'smooth' });
-        b.scrollIntoView({ block: 'nearest', inline: 'center', behavior: reducir ? 'auto' : 'smooth' });
+        irAlPrincipio();
+        // El chip, en medio de su fila (solo esa fila: scrollIntoView movería también la página y cortaría lo de arriba)
+        const fila = $('chips'), r = b.getBoundingClientRect(), c = fila.getBoundingClientRect();
+        fila.scrollBy({ left: r.left - c.left - (c.width - r.width) / 2, behavior: reducir ? 'auto' : 'smooth' });
       });
       return b;
     };
@@ -852,6 +862,21 @@ html.con-feed .aviso{ top: calc(72px + env(safe-area-inset-top)); bottom: auto; 
     fav.id = 'chipFavoritos';
     $('chips').replaceChildren(chip('Todo', ''), fav, ...D.categorias.map((c) => chip(c, c)));
     pintarChipFavoritos();
+  }
+  // Al elegir una categoría: al principio de lo que se ve (su título, justo debajo de la barra fija). La posición se
+  // mide con getBoundingClientRect: el offsetTop de la barra fija es el de donde está pegada ahora, no el de su sitio.
+  // Si está cerca, se desliza hasta allí; si está lejos, se va de golpe (deslizando pasaría toda la lista por delante)
+  // y lo nuevo aparece con un fundido
+  function irAlPrincipio() {
+    const m = $('productos');
+    const s = m.querySelector('.seccion:not(.oculto)') || m;
+    const destino = Math.max(0, s.getBoundingClientRect().top + scrollY - document.querySelector('.barra').offsetHeight - 6);
+    const lejos = Math.abs(destino - scrollY) > innerHeight * 1.2;
+    window.scrollTo({ top: destino, behavior: reducir || lejos ? 'auto' : 'smooth' });
+    if (reducir) return;
+    m.classList.remove('cambio');
+    void m.offsetWidth;  // para que la animación vuelva a empezar
+    m.classList.add('cambio');
   }
   // «♥ Favoritos (3)»: solo si hay alguno (o si es el que está elegido)
   function pintarChipFavoritos() {
@@ -1287,10 +1312,11 @@ html.con-feed .aviso{ top: calc(72px + env(safe-area-inset-top)); bottom: auto; 
   // ---- «Descubrir»: los productos uno a uno a pantalla completa, deslizando con el dedo hacia arriba (el siguiente) y
   // hacia abajo (el anterior), como en TikTok. Son los que se ven en la lista en ese momento (la categoría y la
   // búsqueda), en su orden. Cada uno, con su foto grande sobre la misma foto desenfocada, su precio y el botón de
-  // añadirlo, y a la derecha «Me gusta», «Compartir» y «Detalles» (la ficha); dos toques en la foto, me gusta. El
-  // deslizar lo hace el navegador (scroll-snap): va suave, con la inercia del dedo, también en móviles modestos. Las
-  // fotos se piden según se acercan (la que se ve y las dos siguientes) ----
-  const feed = $('feed'), feedScroll = $('feedScroll');
+  // añadirlo, y a la derecha «Me gusta», «Compartir» y «Detalles» (la ficha); dos toques en la foto, me gusta. Se
+  // pasa de una en una (pasarFeed): el carril sigue al dedo y al soltarlo va a la siguiente si se ha arrastrado un poco
+  // o se ha lanzado rápido; si no, vuelve a la misma. Las fotos se piden según se acercan (la que se ve, la de antes y
+  // las dos siguientes) ----
+  const feed = $('feed'), feedVista = $('feedScroll'), carril = $('feedCarril');
   let feedLista = [], feedActual = -1, feedFoco = null, feedCierre = 0;
 
   function abrirFeed(ids, desde = 0) {
@@ -1298,13 +1324,12 @@ html.con-feed .aviso{ top: calc(72px + env(safe-area-inset-top)); bottom: auto; 
     clearTimeout(feedCierre);
     feedLista = ids;
     enFeed = [];
-    feedScroll.replaceChildren(...ids.map(diapositiva), finFeed());
+    carril.replaceChildren(...ids.map(diapositiva), finFeed());
     feedFoco = document.activeElement;
     feed.hidden = false;
     document.documentElement.classList.add('con-feed');
-    feedScroll.scrollTop = Math.max(0, Math.min(desde, ids.length - 1)) * feedScroll.clientHeight;
     feedActual = -1;
-    actualizarFeed();
+    pasarFeed(desde, false);
     ids.forEach((id) => pintarBoton(id));
     // Sube desde abajo (un fotograma después de verse, para que la transición arranque)
     requestAnimationFrame(() => requestAnimationFrame(() => feed.classList.add('abierto')));
@@ -1320,16 +1345,18 @@ html.con-feed .aviso{ top: calc(72px + env(safe-area-inset-top)); bottom: auto; 
     if (feed.hidden) return;
     feed.classList.remove('abierto');
     document.documentElement.classList.remove('con-feed');
-    const fin = () => { feed.hidden = true; feedScroll.replaceChildren(); enFeed = []; feedLista = []; };
+    const fin = () => { feed.hidden = true; carril.replaceChildren(); enFeed = []; feedLista = []; };
     if (reducir) fin(); else feedCierre = setTimeout(fin, 450);
     if (feedFoco && feedFoco.isConnected) feedFoco.focus({ preventScroll: true });
   }
   window.addEventListener('popstate', () => { if (!feed.hidden && !(history.state && history.state.feed)) cerrarFeedYa(); });
 
-  function diapositiva(id) {
+  // La `k`-ésima, en su sitio del carril
+  function diapositiva(id, k) {
     const p = porId.get(id);
     const s = el('section', 'slide');
     s.dataset.id = id;
+    s.style.transform = `translateY(${k * 100}%)`;
     const fondo = el('div', 'slide-fondo');
     if (p.fondo) fondo.style.backgroundColor = p.fondo;
     const dentro = el('div', 'slide-foto-in');
@@ -1393,7 +1420,7 @@ html.con-feed .aviso{ top: calc(72px + env(safe-area-inset-top)); bottom: auto; 
   function finFeed() {
     const volver = el('button', 'boton', 'Volver al principio');
     volver.type = 'button';
-    volver.addEventListener('click', () => feedScroll.scrollTo({ top: 0, behavior: reducir ? 'auto' : 'smooth' }));
+    volver.addEventListener('click', () => pasarFeed(0, false));  // de golpe: deslizando pasarían todas por delante
     const pedido = el('button', 'boton sec', 'Ver mi pedido');
     pedido.type = 'button';
     pedido.addEventListener('click', abrirCestaDesdeFeed);
@@ -1401,6 +1428,7 @@ html.con-feed .aviso{ top: calc(72px + env(safe-area-inset-top)); bottom: auto; 
       el('p', '', `${feedLista.length} ${feedLista.length === 1 ? 'producto' : 'productos'}. Si te gusta algo, añádelo y envíanos el pedido.`),
       volver, pedido));
     s.dataset.fin = '1';
+    s.style.transform = `translateY(${feedLista.length * 100}%)`;  // detrás de la última
     return s;
   }
 
@@ -1414,20 +1442,82 @@ html.con-feed .aviso{ top: calc(72px + env(safe-area-inset-top)); bottom: auto; 
     s.querySelector('.slide-foto img').src = `img/${p.img}-960.webp`;
   }
 
-  // Cuál se está viendo (al deslizar, una vez por fotograma como mucho): se marca (lo suyo entra con su animación), se
-  // cargan sus fotos y las de al lado y arriba se pone dónde se está
-  let feedPintando = false;
-  feedScroll.addEventListener('scroll', () => {
-    if (feedPintando) return;
-    feedPintando = true;
-    requestAnimationFrame(() => { feedPintando = false; actualizarFeed(); });
-  }, { passive: true });
-  function actualizarFeed() {
+  // A la diapositiva `i` (la última es la del final): el carril se mueve a su sitio, deslizándose (o de golpe)
+  function pasarFeed(i, animar = true) {
     const n = feedLista.length;
     if (!n) return;
-    const i = Math.max(0, Math.min(n, Math.round(feedScroll.scrollTop / (feedScroll.clientHeight || 1))));
-    if (i === feedActual) return;
-    const slides = feedScroll.children;
+    i = Math.max(0, Math.min(n, i));
+    carril.classList.toggle('sin-transicion', !animar || reducir);
+    carril.style.transform = `translateY(${-i * 100}%)`;
+    actualizarFeed(i);
+  }
+  const irFeed = (d) => pasarFeed(feedActual + d);
+
+  // Con el dedo: el carril lo sigue (en la primera y en la última, con resistencia) y al soltar se decide. Pasa a la
+  // siguiente (o a la de antes) si se ha arrastrado más de un 15 % de la pantalla o se ha lanzado rápido; si no, vuelve.
+  // Lo de lado no cuenta (p. ej. pasar los colores): solo se mueve si el gesto es sobre todo vertical
+  let toque = null, sinClic = false;
+  feedVista.addEventListener('touchstart', (ev) => {
+    sinClic = false;
+    if (ev.touches.length !== 1) { toque = null; return; }
+    const t = ev.touches[0];
+    toque = { x0: t.clientX, y0: t.clientY, dy: 0, vertical: null, puntos: [[performance.now(), t.clientY]] };
+  }, { passive: true });
+  feedVista.addEventListener('touchmove', (ev) => {
+    if (!toque) return;
+    const t = ev.touches[0];
+    const dx = t.clientX - toque.x0, dy = t.clientY - toque.y0;
+    if (toque.vertical === null && Math.abs(dx) + Math.abs(dy) > 8) toque.vertical = Math.abs(dy) >= Math.abs(dx);
+    if (!toque.vertical) return;
+    toque.dy = dy;
+    toque.puntos.push([performance.now(), t.clientY]);
+    if (toque.puntos.length > 6) toque.puntos.shift();  // los últimos ~100 ms: para la velocidad al soltar
+    const enUnExtremo = (feedActual === 0 && dy > 0) || (feedActual >= feedLista.length && dy < 0);
+    carril.classList.add('arrastrando');
+    carril.style.transform = `translateY(calc(${-feedActual * 100}% + ${enUnExtremo ? dy * .3 : dy}px))`;
+  }, { passive: true });
+  const soltar = (cancelado) => {
+    if (!toque) return;
+    const { dy, vertical, puntos } = toque;
+    toque = null;
+    carril.classList.remove('arrastrando');
+    if (!vertical) return;
+    sinClic = Math.abs(dy) > 10;  // un arrastre no es un toque: que no pulse lo que haya debajo
+    const [t1, y1] = puntos[0], [t2, y2] = puntos[puntos.length - 1];
+    const v = (y2 - y1) / Math.max(1, t2 - t1);  // px/ms; hacia arriba, negativa
+    const lejos = Math.abs(dy) > feedVista.clientHeight * .15;
+    const lanzado = Math.abs(v) > .35 && Math.abs(dy) > 24 && Math.sign(v) === Math.sign(dy);
+    pasarFeed(feedActual + (!cancelado && (lejos || lanzado) ? (dy < 0 ? 1 : -1) : 0));
+  };
+  feedVista.addEventListener('touchend', () => soltar(false));
+  feedVista.addEventListener('touchcancel', () => soltar(true));
+  feedVista.addEventListener('click', (ev) => {
+    if (!sinClic) return;
+    sinClic = false;
+    ev.preventDefault();
+    ev.stopPropagation();
+  }, true);
+  // Con la rueda del ratón (o el panel táctil del portátil): de una en una; la siguiente, después de una pausa (si no,
+  // la inercia del panel pasaría varias)
+  let rueda = 0, ruedaQuieta = 0, ruedaParada = false;
+  feedVista.addEventListener('wheel', (ev) => {
+    ev.preventDefault();
+    clearTimeout(ruedaQuieta);
+    ruedaQuieta = setTimeout(() => { ruedaParada = false; rueda = 0; }, 180);
+    if (ruedaParada) return;
+    rueda += ev.deltaY;
+    if (Math.abs(rueda) < 40) return;
+    irFeed(Math.sign(rueda));
+    ruedaParada = true;
+    rueda = 0;
+  }, { passive: false });
+
+  // Cuál se está viendo: se marca (lo suyo entra con su animación), se cargan sus fotos y las de al lado y arriba se
+  // pone dónde se está
+  function actualizarFeed(i) {
+    const n = feedLista.length;
+    if (!n || i === feedActual) return;
+    const slides = carril.children;
     if (slides[feedActual]) slides[feedActual].classList.remove('activa');
     feedActual = i;
     slides[i].classList.add('activa');
@@ -1440,12 +1530,6 @@ html.con-feed .aviso{ top: calc(72px + env(safe-area-inset-top)); bottom: auto; 
     $('feedSiguiente').disabled = i >= n;
     if (i > 0) quitarPista();
   }
-  const irFeed = (d) => feedScroll.scrollBy({ top: d * feedScroll.clientHeight, behavior: reducir ? 'auto' : 'smooth' });
-  // Si cambia el alto (girar el móvil, la barra del navegador): que siga en la misma
-  window.addEventListener('resize', () => {
-    if (feed.hidden || feedActual < 0) return;
-    feedScroll.scrollTop = feedActual * feedScroll.clientHeight;
-  });
   // Con teclado: flechas (o j / k) para pasar y Esc para salir
   document.addEventListener('keydown', (ev) => {
     if (feed.hidden || document.querySelector('dialog[open]')) return;
