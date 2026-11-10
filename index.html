@@ -333,9 +333,11 @@ html.con-feed, html.con-feed body{ overflow: hidden; }
 /* Cada una, en su sitio del carril (translateY de su número × 100 %); las que no se ven no se pintan
    (content-visibility): con 300 productos, el móvil solo trabaja con las de delante */
 .slide{ position: absolute; inset: 0; overflow: hidden; display: flex; justify-content: center; content-visibility: auto; }
-/* Detrás, la misma foto ampliada y desenfocada: llena la pantalla con sus colores */
-.slide-fondo{ position: absolute; inset: -60px; background: #0b0f1a center / cover no-repeat;
-  filter: blur(30px) saturate(150%) brightness(.5); transform: translateZ(0); }
+/* Detrás, la misma foto ampliada y desenfocada: llena la pantalla con sus colores. Viene ya desenfocada, más saturada y
+   oscurecida de la app (web.py, _foto_fondo, 160 px): hasta el 10/11/2026 lo hacía el móvil con filter: blur(30px)
+   saturate(150%) brightness(.5) en cada fotograma al deslizar, sobre dos capas de toda la pantalla, y en el móvil del
+   dueño (120 Hz) iba a tirones */
+.slide-fondo{ position: absolute; inset: 0; background: #0b0f1a center / cover no-repeat; }
 /* En columna: la foto ocupa lo que deja libre lo de abajo (nombre, descripción, comprar), así nunca queda tapada */
 .slide-marco{ position: relative; width: 100%; max-width: 560px; height: 100%; display: flex; flex-direction: column; }
 .slide-foto{ position: relative; flex: 1; min-height: 0; }
@@ -427,9 +429,10 @@ html.con-feed, html.con-feed body{ overflow: hidden; }
 .feed-titulo{ flex: 1; min-width: 0; text-align: center; font-weight: 750; font-size: 15px; text-shadow: 0 1px 8px rgba(0, 0, 0, .7);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .feed-titulo small{ display: block; font-size: 11.5px; font-weight: 600; opacity: .75; font-variant-numeric: tabular-nums; }
-.feed-progreso{ position: absolute; z-index: 4; left: 0; top: 0; height: 3px; width: 0; border-radius: 0 2px 2px 0;
-  background: linear-gradient(90deg, var(--marca-texto), var(--marca)); box-shadow: 0 0 10px rgba(var(--marca-rgb), .9);
-  transition: width .4s var(--ease); }
+/* Crece con transform (scaleX, en la tarjeta gráfica) y no con width, que recolocaba la página en cada fotograma */
+.feed-progreso{ position: absolute; z-index: 4; left: 0; top: 0; height: 3px; width: 100%; transform: scaleX(0);
+  transform-origin: left; background: linear-gradient(90deg, var(--marca-texto), var(--marca));
+  box-shadow: 0 0 10px rgba(var(--marca-rgb), .9); transition: transform .4s var(--ease); }
 /* La primera vez: cómo se pasa al siguiente */
 .feed-pista{ position: absolute; z-index: 3; left: 50%; top: 38%; transform: translate(-50%, -50%); display: flex; flex-direction: column;
   align-items: center; gap: 8px; padding: 16px 22px; border-radius: 20px; background: rgba(0, 0, 0, .5); font-weight: 700; text-align: center;
@@ -1311,22 +1314,25 @@ html.con-feed .aviso{ top: calc(72px + env(safe-area-inset-top)); bottom: auto; 
   // añadirlo, y a la derecha «Me gusta», «Compartir» y «Detalles» (la ficha); dos toques en la foto, me gusta. Se
   // pasa de una en una (pasarFeed): el carril sigue al dedo y al soltarlo va a la siguiente si se ha arrastrado un poco
   // o se ha lanzado rápido; si no, vuelve a la misma. Las fotos se piden según se acercan (la que se ve, la de antes y
-  // las dos siguientes) ----
+  // las dos siguientes). En la página solo están las de alrededor de la que se ve (ponerAlrededor): con «Todo» eran más
+  // de 400 diapositivas y 20.000 elementos que el móvil arrastraba (10/11/2026, al ir a tirones en el móvil del dueño) ----
   const feed = $('feed'), feedVista = $('feedScroll'), carril = $('feedCarril');
   let feedLista = [], feedActual = -1, feedFoco = null, feedCierre = 0;
+  let feedSlides = new Map();  // posición → su diapositiva (solo las de alrededor de la actual)
+  const ANTES = 2, DESPUES = 3;
 
   function abrirFeed(ids, desde = 0) {
     if (!ids.length) return;
     clearTimeout(feedCierre);
     feedLista = ids;
     enFeed = [];
-    carril.replaceChildren(...ids.map(diapositiva), finFeed());
+    feedSlides = new Map();
+    carril.replaceChildren();
     feedFoco = document.activeElement;
     feed.hidden = false;
     document.documentElement.classList.add('con-feed');
     feedActual = -1;
     pasarFeed(desde, false);
-    ids.forEach((id) => pintarBoton(id));
     // Sube desde abajo (un fotograma después de verse, para que la transición arranque)
     requestAnimationFrame(() => requestAnimationFrame(() => feed.classList.add('abierto')));
     if (!(history.state && history.state.feed)) history.pushState({ feed: true }, '');
@@ -1341,7 +1347,7 @@ html.con-feed .aviso{ top: calc(72px + env(safe-area-inset-top)); bottom: auto; 
     if (feed.hidden) return;
     feed.classList.remove('abierto');
     document.documentElement.classList.remove('con-feed');
-    const fin = () => { feed.hidden = true; carril.replaceChildren(); enFeed = []; feedLista = []; };
+    const fin = () => { feed.hidden = true; carril.replaceChildren(); enFeed = []; feedLista = []; feedSlides = new Map(); };
     if (reducir) fin(); else feedCierre = setTimeout(fin, 450);
     if (feedFoco && feedFoco.isConnected) feedFoco.focus({ preventScroll: true });
   }
@@ -1378,7 +1384,8 @@ html.con-feed .aviso{ top: calc(72px + env(safe-area-inset-top)); bottom: auto; 
     const colores = p.colores.length > 1 ? el('div', 'slide-colores', ...p.colores.slice(0, 10).map(punto),
       el('span', 'que', `${p.colores.length > 10 ? `+${p.colores.length - 10} · ` : ''}${p.colores.length} colores`)) : null;
     const b = botonesCompra(p, hayQueElegir(p) ? 'Elegir y añadir' : 'Añadir al pedido');
-    enFeed.push({ id, b });
+    s.compra = { id, b };  // se quita de enFeed cuando la diapositiva sale de la página
+    enFeed.push(s.compra);
     const info = el('div', 'slide-info', etiquetas, el('h2', '', p.nombre), desc, colores,
       el('div', 'slide-compra', el('span', 'slide-precio', precio(p.precio)), b.mas, b.paso));
     // A la derecha: me gusta, compartir por WhatsApp y la ficha entera
@@ -1428,14 +1435,34 @@ html.con-feed .aviso{ top: calc(72px + env(safe-area-inset-top)); bottom: auto; 
     return s;
   }
 
-  // La foto de una diapositiva, cuando se acerca: la grande delante y la pequeña, desenfocada, detrás
+  // La foto de una diapositiva, cuando se acerca: la grande delante y detrás la del fondo, que ya viene desenfocada y
+  // oscurecida de la app (web.py, _foto_fondo): el móvil solo la estira, sin desenfocar nada al deslizar
   function cargar(s) {
     if (!s || s.dataset.cargada || s.dataset.fin) return;
     s.dataset.cargada = '1';
     const p = porId.get(s.dataset.id);
     if (!p.img) return;
-    s.querySelector('.slide-fondo').style.backgroundImage = `url("img/${p.img}-480.webp")`;
+    s.querySelector('.slide-fondo').style.backgroundImage = `url("img/${p.img}-fondo.webp")`;
     s.querySelector('.slide-foto img').src = `img/${p.img}-960.webp`;
+  }
+
+  // Las diapositivas de alrededor de la `i` (de ANTES antes a DESPUES después) en la página; las demás, fuera
+  function ponerAlrededor(i) {
+    const n = feedLista.length;
+    const desde = Math.max(0, i - ANTES), hasta = Math.min(n, i + DESPUES);
+    for (const [k, s] of feedSlides) {
+      if (k >= desde && k <= hasta) continue;
+      s.remove();
+      feedSlides.delete(k);
+      if (s.compra) enFeed = enFeed.filter((x) => x !== s.compra);
+    }
+    for (let k = desde; k <= hasta; k++) {
+      if (feedSlides.has(k)) continue;
+      const s = k === n ? finFeed() : diapositiva(feedLista[k], k);
+      feedSlides.set(k, s);
+      carril.append(s);
+      if (k < n) pintarBoton(feedLista[k]);
+    }
   }
 
   // A la diapositiva `i` (la última es la del final): el carril se mueve a su sitio, deslizándose (o de golpe)
@@ -1452,30 +1479,42 @@ html.con-feed .aviso{ top: calc(72px + env(safe-area-inset-top)); bottom: auto; 
   // Con el dedo: el carril lo sigue (en la primera y en la última, con resistencia) y al soltar se decide. Pasa a la
   // siguiente (o a la de antes) si se ha arrastrado más de un 15 % de la pantalla o se ha lanzado rápido; si no, vuelve.
   // Lo de lado no cuenta (p. ej. pasar los colores): solo se mueve si el gesto es sobre todo vertical
-  let toque = null, sinClic = false;
+  // El carril se mueve una vez por fotograma (requestAnimationFrame), con la última posición del dedo: el móvil puede
+  // mandar varios movimientos por fotograma y cada uno recalculaba el estilo
+  let toque = null, sinClic = false, marcoDedo = 0;
   feedVista.addEventListener('touchstart', (ev) => {
     sinClic = false;
     if (ev.touches.length !== 1) { toque = null; return; }
     const t = ev.touches[0];
     toque = { x0: t.clientX, y0: t.clientY, dy: 0, vertical: null, puntos: [[performance.now(), t.clientY]] };
   }, { passive: true });
+  function seguirDedo() {
+    marcoDedo = 0;
+    if (!toque || !toque.vertical) return;
+    const dy = toque.dy;
+    const enUnExtremo = (feedActual === 0 && dy > 0) || (feedActual >= feedLista.length && dy < 0);
+    carril.style.transform = `translateY(calc(${-feedActual * 100}% + ${enUnExtremo ? dy * .3 : dy}px))`;
+  }
   feedVista.addEventListener('touchmove', (ev) => {
     if (!toque) return;
     const t = ev.touches[0];
     const dx = t.clientX - toque.x0, dy = t.clientY - toque.y0;
-    if (toque.vertical === null && Math.abs(dx) + Math.abs(dy) > 8) toque.vertical = Math.abs(dy) >= Math.abs(dx);
+    if (toque.vertical === null && Math.abs(dx) + Math.abs(dy) > 8) {
+      toque.vertical = Math.abs(dy) >= Math.abs(dx);
+      if (toque.vertical) carril.classList.add('arrastrando');
+    }
     if (!toque.vertical) return;
     toque.dy = dy;
     toque.puntos.push([performance.now(), t.clientY]);
     if (toque.puntos.length > 6) toque.puntos.shift();  // los últimos ~100 ms: para la velocidad al soltar
-    const enUnExtremo = (feedActual === 0 && dy > 0) || (feedActual >= feedLista.length && dy < 0);
-    carril.classList.add('arrastrando');
-    carril.style.transform = `translateY(calc(${-feedActual * 100}% + ${enUnExtremo ? dy * .3 : dy}px))`;
+    if (!marcoDedo) marcoDedo = requestAnimationFrame(seguirDedo);
   }, { passive: true });
   const soltar = (cancelado) => {
     if (!toque) return;
     const { dy, vertical, puntos } = toque;
     toque = null;
+    cancelAnimationFrame(marcoDedo);
+    marcoDedo = 0;
     carril.classList.remove('arrastrando');
     if (!vertical) return;
     sinClic = Math.abs(dy) > 10;  // un arrastre no es un toque: que no pulse lo que haya debajo
@@ -1513,15 +1552,15 @@ html.con-feed .aviso{ top: calc(72px + env(safe-area-inset-top)); bottom: auto; 
   function actualizarFeed(i) {
     const n = feedLista.length;
     if (!n || i === feedActual) return;
-    const slides = carril.children;
-    if (slides[feedActual]) slides[feedActual].classList.remove('activa');
+    ponerAlrededor(i);
+    if (feedSlides.has(feedActual)) feedSlides.get(feedActual).classList.remove('activa');
     feedActual = i;
-    slides[i].classList.add('activa');
-    for (let k = i - 1; k <= i + 2; k++) cargar(slides[k]);
+    feedSlides.get(i).classList.add('activa');
+    for (let k = i - 1; k <= i + 2; k++) cargar(feedSlides.get(k));
     const p = porId.get(feedLista[i]);
     $('feedTitulo').textContent = p ? p.categoria : 'Fin';
     $('feedPos').textContent = `${Math.min(i + 1, n)} de ${n}`;
-    $('feedProgreso').style.width = `${(Math.min(i + 1, n) / n) * 100}%`;
+    $('feedProgreso').style.transform = `scaleX(${Math.min(i + 1, n) / n})`;
     $('feedAnterior').disabled = i === 0;
     $('feedSiguiente').disabled = i >= n;
     if (i > 0) quitarPista();
